@@ -24,20 +24,10 @@ func Balance(holdings map[Asset]Holding, index map[Asset]float64) map[Asset]Trad
 		totalHoldings += holding.Value * holding.Quantity
 	}
 
-	targetAmount := map[Asset]float64{}
-	targetHoldings := map[Asset]float64{}
+	trades := map[Asset]Trade{}
 
 	for asset, weight := range index {
-		targetHoldings[asset] = totalHoldings * weight
-	}
-
-	for asset, targetHolding := range targetHoldings {
-		targetAmount[asset] = targetHolding / holdings[asset].Value
-	}
-
-	trades := map[Asset]Trade{}
-	for asset, amount := range targetAmount {
-		amountRequired := amount - holdings[asset].Quantity
+		amountRequired := totalHoldings * weight / holdings[asset].Value - holdings[asset].Quantity
 		trades[asset] = makeTrade(amountRequired)
 	}
 
