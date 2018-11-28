@@ -1,44 +1,43 @@
 package balancer
 
 import (
-	"fmt"
-	"math"
+	"github.com/shopspring/decimal"
 )
 
 type Asset string
 
 type Holding struct {
-	Quantity float64
-	Value  float64
+	Quantity decimal.Decimal
+	Value    decimal.Decimal
 }
 
 type Trade struct {
 	Action string
-	Amount string
+	Amount decimal.Decimal
 }
 
-func Balance(holdings map[Asset]Holding, index map[Asset]float64) map[Asset]Trade {
+func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
-	totalHoldings := float64(0)
+	totalHoldings := decimal.NewFromFloat(0)
 	for _, holding := range holdings {
-		totalHoldings += holding.Value * holding.Quantity
+		totalHoldings = totalHoldings.Add(holding.Value.Mul(holding.Quantity))
 	}
 
 	trades := map[Asset]Trade{}
 
 	for asset, weight := range index {
-		amountRequired := totalHoldings * weight / holdings[asset].Value - holdings[asset].Quantity
+		amountRequired := totalHoldings.Mul(weight).Div(holdings[asset].Value).Sub(holdings[asset].Quantity)
 		trades[asset] = makeTrade(amountRequired)
 	}
 
 	return trades
 }
-func makeTrade(amount float64) Trade {
+func makeTrade(amount decimal.Decimal) Trade {
 	var action string
-	if amount < 0 {
+	if amount.IsNegative() {
 		action = "sell"
 	} else {
 		action = "buy"
 	}
-	return Trade{action, fmt.Sprintf("%.2f", math.Abs(amount))}
+	return Trade{action, amount.Abs()}
 }
