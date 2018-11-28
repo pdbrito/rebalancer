@@ -27,7 +27,7 @@ func TestBalancer_Balance(t *testing.T) {
 	}
 }
 
-func BenchmarkBalancer_Balance(b *testing.B) {
+func BenchmarkBalance(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		holdings := map[Asset]Holding{
 			"eth": {20, 200},
