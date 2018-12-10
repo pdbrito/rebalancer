@@ -26,7 +26,11 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 	trades := map[Asset]Trade{}
 
 	for asset, weight := range index {
-		amountRequired := totalHoldings.Mul(weight).Div(holdings[asset].Value).Sub(holdings[asset].Quantity)
+		amountRequired :=
+			totalHoldings.
+				Mul(weight).
+				Div(holdings[asset].Value).
+				Sub(holdings[asset].Quantity)
 		trades[asset] = makeTrade(amountRequired)
 	}
 
