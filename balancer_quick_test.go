@@ -6,25 +6,33 @@ import (
 	"github.com/pdbrito/randomSum"
 	"github.com/shopspring/decimal"
 	"math/rand"
+	"reflect"
 	"strconv"
 	"testing"
 	"testing/quick"
-	"time"
 )
 
+type fakeAccount struct {
+	Holdings map[Asset]Holding
+	Index    map[Asset]decimal.Decimal
+}
+
+func (f fakeAccount) Generate(rand *rand.Rand, size int) reflect.Value {
+	holdings := generateHoldingsNumbering(2)
+
+	return reflect.ValueOf(fakeAccount{
+		Holdings: holdings,
+		Index:    generateIndexForHoldings(holdings),
+	})
+}
+
 func TestBalancer_ResultValueEqualToInput(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
+	assertion := func(f fakeAccount) bool {
+		valueBefore := value(f.Holdings)
 
-	f := func(n int) bool {
-		holdingsBefore := generateHoldingsNumbering(rand.Intn(8) + 2)
-		index := generateIndexForHoldings(holdingsBefore)
+		trades := Balance(f.Holdings, f.Index)
 
-		valueBefore := value(holdingsBefore)
-
-		trades := Balance(holdingsBefore, index)
-
-		holdingsAfter := execute(trades, holdingsBefore)
-
+		holdingsAfter := execute(trades, f.Holdings)
 		valueAfter := value(holdingsAfter)
 
 		sub := valueAfter.Sub(valueBefore)
@@ -32,7 +40,7 @@ func TestBalancer_ResultValueEqualToInput(t *testing.T) {
 
 		return valueAfter.Equal(valueBefore)
 	}
-	if err := quick.Check(f, nil); err != nil {
+	if err := quick.Check(assertion, nil); err != nil {
 		t.Error(err)
 	}
 }
