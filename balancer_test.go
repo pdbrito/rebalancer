@@ -8,9 +8,15 @@ import (
 
 func TestBalancer_Balance(t *testing.T) {
 	holdings := map[Asset]Holding{
-		"eth": {decimal.NewFromFloat(20), decimal.NewFromFloat(200)},
-		"btc": {decimal.NewFromFloat(0.5), decimal.NewFromFloat(5000)},
+		"eth": {
+			decimal.NewFromFloat(20),
+			decimal.NewFromFloat(200),
+		},
+		"btc": {
+			decimal.NewFromFloat(0.5),
+			decimal.NewFromFloat(5000)},
 	}
+
 	index := map[Asset]decimal.Decimal{
 		"eth": decimal.NewFromFloat(0.3),
 		"btc": decimal.NewFromFloat(0.7),
@@ -38,10 +44,20 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 			t.Errorf("asset %s missing from trade list", asset)
 		}
 		if gotTrade.Action != wantTrade.Action {
-			t.Errorf("got a trade action of %s, want %s for asset %s", gotTrade.Action, wantTrade.Action, asset)
+			t.Errorf(
+				"got a trade action of %s, want %s for asset %s",
+				gotTrade.Action,
+				wantTrade.Action,
+				asset,
+			)
 		}
-		if gotTrade.Amount.Cmp(wantTrade.Amount) != 0 {
-			t.Errorf("got %v want %v for trade of asset %s", gotTrade.Amount, wantTrade.Amount, asset)
+		if !gotTrade.Amount.Equal(wantTrade.Amount) {
+			t.Errorf(
+				"got %v want %v for trade of asset %s",
+				gotTrade.Amount,
+				wantTrade.Amount,
+				asset,
+			)
 		}
 	}
 }
@@ -49,8 +65,13 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 func BenchmarkBalance(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		holdings := map[Asset]Holding{
-			"eth": {decimal.NewFromFloat(20), decimal.NewFromFloat(200)},
-			"btc": {decimal.NewFromFloat(0.5), decimal.NewFromFloat(5000)},
+			"eth": {
+				decimal.NewFromFloat(20),
+				decimal.NewFromFloat(200)},
+			"btc": {
+				decimal.NewFromFloat(0.5),
+				decimal.NewFromFloat(5000),
+			},
 		}
 		index := map[Asset]decimal.Decimal{
 			"eth": decimal.NewFromFloat(0.3),
