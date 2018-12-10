@@ -18,7 +18,7 @@ type Trade struct {
 
 func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
-	totalHoldings := decimal.NewFromFloat(0)
+	totalHoldings := decimal.Zero
 	for _, holding := range holdings {
 		totalHoldings = totalHoldings.Add(holding.Value.Mul(holding.Quantity))
 	}
