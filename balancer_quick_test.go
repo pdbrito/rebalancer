@@ -36,11 +36,22 @@ func TestBalancer_ResultValueEqualToInput(t *testing.T) {
 		valueAfter := value(holdingsAfter)
 
 		sub := valueAfter.Sub(valueBefore)
-		fmt.Printf("difference: %v \n", sub)
+		if !sub.Equal(decimal.Zero) {
+			fmt.Printf("difference: %v \n", sub)
+		}
 
 		return valueAfter.Equal(valueBefore)
 	}
 	if err := quick.Check(assertion, nil); err != nil {
+		if e, ok := err.(*quick.CheckError); ok {
+			for _, value := range e.In {
+				fa := value.(fakeAccount)
+				fmt.Printf("Holdings: %v\n", fa.Holdings)
+				fmt.Printf("Index: %v\n", fa.Index)
+				fmt.Printf("Trades: %v\n", Balance(fa.Holdings, fa.Index))
+			}
+		}
+
 		t.Error(err)
 	}
 }
