@@ -37,6 +37,8 @@ func TestBalancer_ResultValueEqualToInput(t *testing.T) {
 
 		sub := valueAfter.Sub(valueBefore)
 		if !sub.Equal(decimal.Zero) {
+			fmt.Printf("Value before: %v \n", valueBefore)
+			fmt.Printf("Value after: %v \n", valueAfter)
 			fmt.Printf("difference: %v \n", sub)
 		}
 
