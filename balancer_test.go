@@ -46,6 +46,7 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 		gotTrade, exists := got[asset]
 		if !exists {
 			t.Errorf("asset %s missing from trade list", asset)
+			return
 		}
 		if gotTrade.Action != wantTrade.Action {
 			t.Errorf(
