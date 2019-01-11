@@ -8,24 +8,28 @@ import (
 
 func TestBalancer_Balance(t *testing.T) {
 	holdings := map[Asset]Holding{
-		"eth": {
+		"ETH": {
 			decimal.NewFromFloat(20),
 			decimal.NewFromFloat(200),
 		},
-		"btc": {
+		"BTC": {
 			decimal.NewFromFloat(0.5),
 			decimal.NewFromFloat(5000)},
 	}
 
 	index := map[Asset]decimal.Decimal{
-		"eth": decimal.NewFromFloat(0.3),
-		"btc": decimal.NewFromFloat(0.7),
+		"ETH": decimal.NewFromFloat(0.3),
+		"BTC": decimal.NewFromFloat(0.7),
 	}
 
 	got := Balance(holdings, index)
 	want := map[Asset]Trade{
-		"eth": {"sell", decimal.NewFromFloat(10.25)},
-		"btc": {"buy", decimal.NewFromFloat(0.41)},
+		"ETH": {"sell", decimal.NewFromFloat(10.25)},
+		"BTC": {"buy", decimal.NewFromFloat(0.41)},
+	}
+
+	assertSameTrades(t, got, want)
+}
 	}
 
 	assertSameTrades(t, got, want)
@@ -65,17 +69,17 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 func BenchmarkBalance(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		holdings := map[Asset]Holding{
-			"eth": {
+			"ETH": {
 				decimal.NewFromFloat(20),
 				decimal.NewFromFloat(200)},
-			"btc": {
+			"BTC": {
 				decimal.NewFromFloat(0.5),
 				decimal.NewFromFloat(5000),
 			},
 		}
 		index := map[Asset]decimal.Decimal{
-			"eth": decimal.NewFromFloat(0.3),
-			"btc": decimal.NewFromFloat(0.7),
+			"ETH": decimal.NewFromFloat(0.3),
+			"BTC": decimal.NewFromFloat(0.7),
 		}
 
 		_ = Balance(holdings, index)
