@@ -30,10 +30,6 @@ func TestBalancer_Balance(t *testing.T) {
 
 	assertSameTrades(t, got, want)
 }
-	}
-
-	assertSameTrades(t, got, want)
-}
 
 func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 	t.Helper()
