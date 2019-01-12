@@ -77,8 +77,8 @@ func generateHoldingsNumbering(n int) map[Asset]Holding {
 	for i := 0; i < n; i++ {
 		assetKey := strconv.Itoa(i)
 		holdings[Asset(assetKey)] = Holding{
-			Quantity: decimal.New(int64(rand.Intn(9)+1), 0),
-			Value:    decimal.New(int64(rand.Intn(9)+1), 0),
+			Quantity: decimal.NewFromFloat(rand.Float64() * 1000),
+			Value:    decimal.NewFromFloat(rand.Float64() * 1000),
 		}
 	}
 	return holdings
