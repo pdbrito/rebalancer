@@ -8,18 +8,23 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// An Asset is a string type used to identify your assets.
 type Asset string
 
+// A Holding represents a current quantity and value.
 type Holding struct {
 	Quantity decimal.Decimal
 	Value    decimal.Decimal
 }
 
+// A Trade represents a buy or sell action of a certain amount
 type Trade struct {
 	Action string
 	Amount decimal.Decimal
 }
 
+// Balance will return a map[Asset]Trade which will balance the passed in
+// holdings to match the passed in index.
 func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
 	totalHoldings := decimal.Zero
