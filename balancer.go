@@ -40,17 +40,13 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 				Mul(weight).
 				Div(holdings[asset].Value).
 				Sub(holdings[asset].Quantity)
-		trades[asset] = makeTrade(amountRequired)
+
+		if amountRequired.IsNegative() {
+			trades[asset] = Trade{"sell", amountRequired.Abs()}
+			continue
+		}
+		trades[asset] = Trade{"buy", amountRequired.Abs()}
 	}
 
 	return trades
-}
-func makeTrade(amount decimal.Decimal) Trade {
-	var action string
-	if amount.IsNegative() {
-		action = "sell"
-	} else {
-		action = "buy"
-	}
-	return Trade{action, amount.Abs()}
 }
