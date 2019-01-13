@@ -1,3 +1,7 @@
+// Package balancer provides functionality to balance investment assets to a
+// target index. This is accomplished by calculating the current percentage
+// allocation of assets and then the trades necessary to match the specified
+// index.
 package balancer
 
 import (
