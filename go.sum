@@ -1,2 +1,4 @@
+github.com/pdbrito/randomSum v0.0.0-20181209213857-cf25ad0ce9f1 h1:qjBkATUWZbZDVMDs7ZIlYxRRvNGpTCclhxp8rTdp5N0=
+github.com/pdbrito/randomSum v0.0.0-20181209213857-cf25ad0ce9f1/go.mod h1:O0sg6WAIkp9vuG+sFMv4PXmbcHS6G+RJnV0963wGMTU=
 github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 h1:pntxY8Ary0t43dCZ5dqY4YTJCObLY1kIXl0uzMv+7DE=
 github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24/go.mod h1:M+9NzErvs504Cn4c5DxATwIqPbtswREoFCre64PpcG4=
