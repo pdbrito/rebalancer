@@ -5,20 +5,31 @@ Balancer provides guidance with the task of [rebalancing assets](https://en.wiki
 
 ### Example
 
-Image you currently own 0.5 BTC and 20 ETH.
+Imagine you own 0.5 BTC and 20 ETH.
 
-If the current price of 1 BTC is $5000 and the current price of 1 ETH is $350
+Imagine the current price of 1 BTC is $5000 and the current price of 1 ETH is $350.
 
-You can model these assets as follows:
+You can model your assets thusly:
 ```go
 myPorfolio := map[Asset]Holding{
     "BTC": {
-        decimal.NewFromFloat(0.5),
-        decimal.NewFromFloat(5000),
+        Amount: decimal.NewFromFloat(0.5),
+        Value: decimal.NewFromFloat(5000),
     },
     "ETH": {
-        decimal.NewFromFloat(0.5),
-        decimal.NewFromFloat(5000)},
-    },
+        Amount: decimal.NewFromFloat(20),
+        Value: decimal.NewFromFloat(350)},
+    }
 }
+```
+
+The current value of all your assets is:
+
+`0.5 x 5000 + 20 x 350 = 9500`
+
+The current weighting of each asset is:
+
+```
+BTC = 0.5 * 2500 / 9500 = 0.263157...
+ETH = 20 * 350 / 9500 = 0.736842...
 ```
