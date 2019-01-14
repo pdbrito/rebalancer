@@ -9,12 +9,12 @@ import (
 func TestBalancer_Balance(t *testing.T) {
 	holdings := map[Asset]Holding{
 		"ETH": {
-			Quantity: decimal.NewFromFloat(20),
-			Value:    decimal.NewFromFloat(200),
+			Amount: decimal.NewFromFloat(20),
+			Value:  decimal.NewFromFloat(200),
 		},
 		"BTC": {
-			Quantity: decimal.NewFromFloat(0.5),
-			Value:    decimal.NewFromFloat(5000)},
+			Amount: decimal.NewFromFloat(0.5),
+			Value:  decimal.NewFromFloat(5000)},
 	}
 
 	index := map[Asset]decimal.Decimal{
@@ -67,11 +67,11 @@ func BenchmarkBalance(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		holdings := map[Asset]Holding{
 			"ETH": {
-				Quantity: decimal.NewFromFloat(20),
-				Value:    decimal.NewFromFloat(200)},
+				Amount: decimal.NewFromFloat(20),
+				Value:  decimal.NewFromFloat(200)},
 			"BTC": {
-				Quantity: decimal.NewFromFloat(0.5),
-				Value:    decimal.NewFromFloat(5000),
+				Amount: decimal.NewFromFloat(0.5),
+				Value:  decimal.NewFromFloat(5000),
 			},
 		}
 		index := map[Asset]decimal.Decimal{

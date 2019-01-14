@@ -11,10 +11,10 @@ import (
 // An Asset is a string type used to identify your assets.
 type Asset string
 
-// A Holding represents a current quantity and value.
+// A Holding represents a current amount and value.
 type Holding struct {
-	Quantity decimal.Decimal
-	Value    decimal.Decimal
+	Amount decimal.Decimal
+	Value  decimal.Decimal
 }
 
 // A Trade represents a buy or sell action of a certain amount
@@ -29,7 +29,7 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 	//validate assumptions; only unique assets etc
 	totalHoldings := decimal.Zero
 	for _, holding := range holdings {
-		totalHoldings = totalHoldings.Add(holding.Value.Mul(holding.Quantity))
+		totalHoldings = totalHoldings.Add(holding.Value.Mul(holding.Amount))
 	}
 
 	trades := map[Asset]Trade{}
@@ -39,7 +39,7 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 			totalHoldings.
 				Mul(weight).
 				Div(holdings[asset].Value).
-				Sub(holdings[asset].Quantity)
+				Sub(holdings[asset].Amount)
 
 		if amountRequired.IsNegative() {
 			trades[asset] = Trade{"sell", amountRequired.Abs()}
