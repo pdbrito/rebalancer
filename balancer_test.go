@@ -1,6 +1,7 @@
 package balancer_test
 
 import (
+	"fmt"
 	. "github.com/pdbrito/balancer"
 	"github.com/shopspring/decimal"
 	"testing"
@@ -61,6 +62,34 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 			)
 		}
 	}
+}
+
+func ExampleBalance() {
+	holdings := map[Asset]Holding{
+		"ETH": {
+			Amount: decimal.NewFromFloat(20),
+			Value:  decimal.NewFromFloat(350),
+		},
+		"BTC": {
+			Amount: decimal.NewFromFloat(0.5),
+			Value:  decimal.NewFromFloat(5000),
+		},
+	}
+
+	desiredWeighting := map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(0.5),
+		"BTC": decimal.NewFromFloat(0.5),
+	}
+
+	requiredTrades := Balance(holdings, desiredWeighting)
+
+	for asset, trade := range requiredTrades {
+		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
+	}
+
+	// Unordered output:
+	// sell 6.4285714285714286 ETH
+	// buy 0.45 BTC
 }
 
 func BenchmarkBalance(b *testing.B) {
