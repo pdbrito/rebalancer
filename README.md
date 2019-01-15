@@ -50,12 +50,12 @@ Passing your current holdings and your desired weighting to the Balance method
 will return the trades necessary to rebalance your portfolio as a `map[Asset]Trade`.
 
 ```go
-    requiredTrades := balancer.Balance(holdings, desiredWeighting)
+requiredTrades := balancer.Balance(holdings, desiredWeighting)
     
-	for asset, trade := range requiredTrades {
-		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
-	}
+for asset, trade := range requiredTrades {
+	fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
+}
 	
-	// sell 6.4285714285714286 ETH
-	// buy 0.45 BTC  
+// sell 6.4285714285714286 ETH
+// buy 0.45 BTC  
 ```
