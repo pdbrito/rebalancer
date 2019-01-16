@@ -32,6 +32,34 @@ func TestBalancer_Balance(t *testing.T) {
 	assertSameTrades(t, got, want)
 }
 
+func TestBalancer_Balance_BalancesOneAssetIntoManyOtherAssets(t *testing.T) {
+	holdings := map[Asset]Holding{
+		"ETH": {
+			Amount: decimal.NewFromFloat(42),
+			Value:  decimal.NewFromFloat(200),
+		},
+	}
+
+	index := map[Asset]decimal.Decimal{
+		"ETH":  decimal.NewFromFloat(0.2),
+		"BTC":  decimal.NewFromFloat(0.2),
+		"IOTA": decimal.NewFromFloat(0.2),
+		"BAT":  decimal.NewFromFloat(0.2),
+		"XLM":  decimal.NewFromFloat(0.2),
+	}
+
+	got := Balance(holdings, index)
+	want := map[Asset]Trade{
+		"ETH":  {Action: "sell", Amount: decimal.NewFromFloat(10.25)},
+		"BTC":  {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
+		"IOTA": {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
+		"BAT":  {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
+		"XLM":  {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
+	}
+
+	assertSameTrades(t, got, want)
+}
+
 func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 	t.Helper()
 
