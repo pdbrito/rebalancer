@@ -32,7 +32,7 @@ func TestBalancer_Balance(t *testing.T) {
 	assertSameTrades(t, got, want)
 }
 
-func TestBalancer_Balance_BalancesOneAssetIntoManyOtherAssets(t *testing.T) {
+func TestBalancer_BalanceNew_BalancesOneAssetIntoManyOtherAssets(t *testing.T) {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(42),
@@ -48,13 +48,21 @@ func TestBalancer_Balance_BalancesOneAssetIntoManyOtherAssets(t *testing.T) {
 		"XLM":  decimal.NewFromFloat(0.2),
 	}
 
-	got := Balance(holdings, index)
+	pricelist := map[Asset]decimal.Decimal{
+		"ETH":  decimal.NewFromFloat(200),
+		"BTC":  decimal.NewFromFloat(2000),
+		"IOTA": decimal.NewFromFloat(0.3),
+		"BAT":  decimal.NewFromFloat(0.12),
+		"XLM":  decimal.NewFromFloat(0.2),
+	}
+
+	got := BalanceNew(holdings, index, pricelist)
 	want := map[Asset]Trade{
-		"ETH":  {Action: "sell", Amount: decimal.NewFromFloat(10.25)},
-		"BTC":  {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
-		"IOTA": {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
-		"BAT":  {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
-		"XLM":  {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
+		"ETH":  {Action: "sell", Amount: decimal.NewFromFloat(33.6)},
+		"BTC":  {Action: "buy", Amount: decimal.NewFromFloat(0.84)},
+		"IOTA": {Action: "buy", Amount: decimal.NewFromFloat(5600)},
+		"BAT":  {Action: "buy", Amount: decimal.NewFromFloat(14000)},
+		"XLM":  {Action: "buy", Amount: decimal.NewFromFloat(8400)},
 	}
 
 	assertSameTrades(t, got, want)

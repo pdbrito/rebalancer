@@ -24,7 +24,9 @@ type Trade struct {
 }
 
 // Balance will return a map[Asset]Trade which will balance the passed in
-// holdings to match the passed in index.
+// holdings to match the passed in index. Assumes rebalancing of existing
+// assets - will panic if there are assets in index that are not present in
+// holdings.
 func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
 	totalHoldings := decimal.Zero
@@ -40,6 +42,43 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 				Mul(weight).
 				Div(holdings[asset].Value).
 				Sub(holdings[asset].Amount)
+
+		if amountRequired.IsNegative() {
+			trades[asset] = Trade{"sell", amountRequired.Abs()}
+			continue
+		}
+		trades[asset] = Trade{"buy", amountRequired.Abs()}
+	}
+
+	return trades
+}
+
+// BalanceNew will return a map[Asset]Trade which will balance the passed in
+// holdings to match the passed in index. BalanceNew can handle rebalancing of
+// assets not present in holdings as long as they are included in the pricelist.
+func BalanceNew(holdings map[Asset]Holding, index, pricelist map[Asset]decimal.Decimal) map[Asset]Trade {
+	//validate assumptions; only unique assets etc
+	totalHoldings := decimal.Zero
+	for _, holding := range holdings {
+		totalHoldings = totalHoldings.Add(holding.Value.Mul(holding.Amount))
+	}
+
+	trades := map[Asset]Trade{}
+
+	amountRequired := decimal.Zero
+	for asset, weight := range index {
+		if holding, ok := holdings[asset]; ok {
+			amountRequired =
+				totalHoldings.
+					Mul(weight).
+					Div(holding.Value).
+					Sub(holding.Amount)
+		} else {
+			amountRequired =
+				totalHoldings.
+					Mul(weight).
+					Div(pricelist[asset])
+		}
 
 		if amountRequired.IsNegative() {
 			trades[asset] = Trade{"sell", amountRequired.Abs()}
