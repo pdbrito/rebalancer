@@ -11,11 +11,11 @@ func TestBalancer_Balance(t *testing.T) {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(20),
-			Value:  decimal.NewFromFloat(200),
+			Price:  decimal.NewFromFloat(200),
 		},
 		"BTC": {
 			Amount: decimal.NewFromFloat(0.5),
-			Value:  decimal.NewFromFloat(5000)},
+			Price:  decimal.NewFromFloat(5000)},
 	}
 
 	index := map[Asset]decimal.Decimal{
@@ -36,7 +36,7 @@ func TestBalancer_BalanceNew_BalancesOneAssetIntoManyOtherAssets(t *testing.T) {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(42),
-			Value:  decimal.NewFromFloat(200),
+			Price:  decimal.NewFromFloat(200),
 		},
 	}
 
@@ -104,11 +104,11 @@ func ExampleBalance() {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(20),
-			Value:  decimal.NewFromFloat(350),
+			Price:  decimal.NewFromFloat(350),
 		},
 		"BTC": {
 			Amount: decimal.NewFromFloat(0.5),
-			Value:  decimal.NewFromFloat(5000),
+			Price:  decimal.NewFromFloat(5000),
 		},
 	}
 
@@ -133,10 +133,10 @@ func BenchmarkBalance(b *testing.B) {
 		holdings := map[Asset]Holding{
 			"ETH": {
 				Amount: decimal.NewFromFloat(20),
-				Value:  decimal.NewFromFloat(200)},
+				Price:  decimal.NewFromFloat(200)},
 			"BTC": {
 				Amount: decimal.NewFromFloat(0.5),
-				Value:  decimal.NewFromFloat(5000),
+				Price:  decimal.NewFromFloat(5000),
 			},
 		}
 		index := map[Asset]decimal.Decimal{

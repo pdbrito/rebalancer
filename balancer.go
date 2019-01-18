@@ -14,7 +14,7 @@ type Asset string
 // A Holding represents a current amount and value.
 type Holding struct {
 	Amount decimal.Decimal
-	Value  decimal.Decimal
+	Price  decimal.Decimal
 }
 
 // A Trade represents a buy or sell action of a certain amount
@@ -31,7 +31,7 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 	//validate assumptions; only unique assets etc
 	totalHoldings := decimal.Zero
 	for _, holding := range holdings {
-		totalHoldings = totalHoldings.Add(holding.Value.Mul(holding.Amount))
+		totalHoldings = totalHoldings.Add(holding.Price.Mul(holding.Amount))
 	}
 
 	trades := map[Asset]Trade{}
@@ -40,7 +40,7 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 		amountRequired :=
 			totalHoldings.
 				Mul(weight).
-				Div(holdings[asset].Value).
+				Div(holdings[asset].Price).
 				Sub(holdings[asset].Amount)
 
 		if amountRequired.IsNegative() {
@@ -60,7 +60,7 @@ func BalanceNew(holdings map[Asset]Holding, index, pricelist map[Asset]decimal.D
 	//validate assumptions; only unique assets etc
 	totalHoldings := decimal.Zero
 	for _, holding := range holdings {
-		totalHoldings = totalHoldings.Add(holding.Value.Mul(holding.Amount))
+		totalHoldings = totalHoldings.Add(holding.Price.Mul(holding.Amount))
 	}
 
 	trades := map[Asset]Trade{}
@@ -71,7 +71,7 @@ func BalanceNew(holdings map[Asset]Holding, index, pricelist map[Asset]decimal.D
 			amountRequired =
 				totalHoldings.
 					Mul(weight).
-					Div(holding.Value).
+					Div(holding.Price).
 					Sub(holding.Amount)
 		} else {
 			amountRequired =

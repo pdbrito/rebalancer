@@ -15,11 +15,11 @@ You can model your assets thusly:
 holdings := map[Asset]Holding{
     "ETH": {
         Amount: decimal.NewFromFloat(20),
-        Value:  decimal.NewFromFloat(350),
+        Price:  decimal.NewFromFloat(350),
     },
     "BTC": {
         Amount: decimal.NewFromFloat(0.5),
-        Value:  decimal.NewFromFloat(50000)},
+        Price:  decimal.NewFromFloat(50000)},
     }
 }
 ```
