@@ -55,7 +55,7 @@ func calculateIndex(holdings map[Asset]Holding) map[Asset]decimal.Decimal {
 	index := make(map[Asset]decimal.Decimal)
 	value := value(holdings)
 	for asset, holding := range holdings {
-		index[asset] = holding.Value.Mul(holding.Amount).Div(value)
+		index[asset] = holding.Price.Mul(holding.Amount).Div(value)
 	}
 	return index
 }
@@ -78,7 +78,7 @@ func generateHoldingsNumbering(n int) map[Asset]Holding {
 		assetKey := strconv.Itoa(i)
 		holdings[Asset(assetKey)] = Holding{
 			Amount: decimal.NewFromFloat(rand.Float64() * 1000),
-			Value:  decimal.NewFromFloat(rand.Float64() * 1000),
+			Price:  decimal.NewFromFloat(rand.Float64() * 1000),
 		}
 	}
 	return holdings
@@ -101,7 +101,7 @@ func generateIndexForHoldings(holdings map[Asset]Holding) map[Asset]decimal.Deci
 
 func value(holdings map[Asset]Holding) (sum decimal.Decimal) {
 	for _, holding := range holdings {
-		sum = sum.Add(holding.Amount.Mul(holding.Value))
+		sum = sum.Add(holding.Amount.Mul(holding.Price))
 	}
 	return sum
 }
@@ -120,7 +120,7 @@ func execute(trades map[Asset]Trade, holdings map[Asset]Holding) map[Asset]Holdi
 
 		res[asset] = Holding{
 			Amount: quantityAfterTrade,
-			Value:  holdings[asset].Value,
+			Price:  holdings[asset].Price,
 		}
 	}
 	return res
