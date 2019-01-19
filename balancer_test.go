@@ -18,12 +18,14 @@ func TestBalancer_Balance(t *testing.T) {
 			Price:  decimal.NewFromFloat(5000)},
 	}
 
+	Account := NewAccount(holdings)
+
 	index := map[Asset]decimal.Decimal{
 		"ETH": decimal.NewFromFloat(0.3),
 		"BTC": decimal.NewFromFloat(0.7),
 	}
 
-	got := Balance(holdings, index)
+	got := Account.Balance(index)
 	want := map[Asset]Trade{
 		"ETH": {Action: "sell", Amount: decimal.NewFromFloat(10.25)},
 		"BTC": {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
@@ -56,7 +58,9 @@ func TestBalancer_BalanceNew_BalancesOneAssetIntoManyOtherAssets(t *testing.T) {
 		"XLM":  decimal.NewFromFloat(0.2),
 	}
 
-	got := BalanceNew(holdings, index, pricelist)
+	Account := NewAccount(holdings)
+
+	got := Account.BalanceNew(index, pricelist)
 	want := map[Asset]Trade{
 		"ETH":  {Action: "sell", Amount: decimal.NewFromFloat(33.6)},
 		"BTC":  {Action: "buy", Amount: decimal.NewFromFloat(0.84)},
@@ -100,7 +104,7 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 	}
 }
 
-func ExampleBalance() {
+func ExampleAccount_Balance() {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(20),
@@ -117,7 +121,9 @@ func ExampleBalance() {
 		"BTC": decimal.NewFromFloat(0.5),
 	}
 
-	requiredTrades := Balance(holdings, desiredWeights)
+	Account := NewAccount(holdings)
+
+	requiredTrades := Account.Balance(desiredWeights)
 
 	for asset, trade := range requiredTrades {
 		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
@@ -128,7 +134,7 @@ func ExampleBalance() {
 	// buy 0.45 BTC
 }
 
-func ExampleBalanceNew() {
+func ExampleAccount_BalanceNew() {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(42),
@@ -152,7 +158,9 @@ func ExampleBalanceNew() {
 		"XLM":  decimal.NewFromFloat(0.2),
 	}
 
-	requiredTrades := BalanceNew(holdings, desiredWeights, pricelist)
+	Account := NewAccount(holdings)
+
+	requiredTrades := Account.BalanceNew(desiredWeights, pricelist)
 
 	for asset, trade := range requiredTrades {
 		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
@@ -182,6 +190,8 @@ func BenchmarkBalance(b *testing.B) {
 			"BTC": decimal.NewFromFloat(0.7),
 		}
 
-		_ = Balance(holdings, index)
+		Account := NewAccount(holdings)
+
+		_ = Account.Balance(index)
 	}
 }

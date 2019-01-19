@@ -8,6 +8,16 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// An Account has holdings
+type Account struct {
+	holdings map[Asset]Holding
+}
+
+// NewAccount returns a new Account struct
+func NewAccount(holdings map[Asset]Holding) Account {
+	return Account{holdings: holdings}
+}
+
 // An Asset is a string type used to identify your assets.
 type Asset string
 
@@ -27,10 +37,10 @@ type Trade struct {
 // holdings to match the passed in index. Assumes rebalancing of existing
 // assets - will panic if there are assets in index that are not present in
 // holdings.
-func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[Asset]Trade {
+func (a Account) Balance(index map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
 	totalHoldings := decimal.Zero
-	for _, holding := range holdings {
+	for _, holding := range a.holdings {
 		totalHoldings = totalHoldings.Add(holding.Price.Mul(holding.Amount))
 	}
 
@@ -40,8 +50,8 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 		amountRequired :=
 			totalHoldings.
 				Mul(weight).
-				Div(holdings[asset].Price).
-				Sub(holdings[asset].Amount)
+				Div(a.holdings[asset].Price).
+				Sub(a.holdings[asset].Amount)
 
 		if amountRequired.IsNegative() {
 			trades[asset] = Trade{"sell", amountRequired.Abs()}
@@ -56,10 +66,10 @@ func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[As
 // BalanceNew will return a map[Asset]Trade which will balance the passed in
 // holdings to match the passed in index. BalanceNew can handle rebalancing of
 // assets not present in holdings as long as they are included in the pricelist.
-func BalanceNew(holdings map[Asset]Holding, index, pricelist map[Asset]decimal.Decimal) map[Asset]Trade {
+func (a Account) BalanceNew(index, pricelist map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
 	totalHoldings := decimal.Zero
-	for _, holding := range holdings {
+	for _, holding := range a.holdings {
 		totalHoldings = totalHoldings.Add(holding.Price.Mul(holding.Amount))
 	}
 
@@ -67,7 +77,7 @@ func BalanceNew(holdings map[Asset]Holding, index, pricelist map[Asset]decimal.D
 
 	amountRequired := decimal.Zero
 	for asset, weight := range index {
-		if holding, ok := holdings[asset]; ok {
+		if holding, ok := a.holdings[asset]; ok {
 			amountRequired =
 				totalHoldings.
 					Mul(weight).
