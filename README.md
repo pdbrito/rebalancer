@@ -48,11 +48,13 @@ desiredWeights := map[Asset]decimal.Decimal{
 }
 ```
 
-Passing your current holdings and your desired weighting to the Balance method
-will return the trades necessary to rebalance your portfolio as a `map[Asset]Trade`.
+Creating a new account from your holdings and calling the Balance method on the
+account will return the trades necessary to rebalance your portfolio as a 
+`map[Asset]Trade`.
 
 ```go
-requiredTrades := balancer.Balance(holdings, desiredWeights)
+Account := balance.NewAccount(holdings)
+requiredTrades := Account.Balance(desiredWeights)
     
 for asset, trade := range requiredTrades {
 	fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
@@ -92,7 +94,9 @@ pricelist := map[Asset]decimal.Decimal{
     "XLM":  decimal.NewFromFloat(0.2),
 }
 
-requiredTrades := BalanceNew(holdings, desiredWeights, pricelist)
+Account := balance.NewAccount(holdings)
+
+requiredTrades := Account.BalanceNew(desiredWeights, pricelist)
 
 for asset, trade := range requiredTrades {
     fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
