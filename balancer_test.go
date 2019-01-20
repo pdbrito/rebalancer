@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestBalancer_Balance(t *testing.T) {
+func TestAccount_Balance(t *testing.T) {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(20),
@@ -34,7 +34,7 @@ func TestBalancer_Balance(t *testing.T) {
 	assertSameTrades(t, got, want)
 }
 
-func TestBalancer_BalanceNew_BalancesOneAssetIntoManyOtherAssets(t *testing.T) {
+func TestAccount_BalanceNew(t *testing.T) {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(42),
