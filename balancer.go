@@ -11,11 +11,16 @@ import (
 // An Account has holdings
 type Account struct {
 	holdings map[Asset]Holding
+	value    decimal.Decimal
 }
 
 // NewAccount returns a new Account struct
 func NewAccount(holdings map[Asset]Holding) Account {
-	return Account{holdings: holdings}
+	totalValue := decimal.Zero
+	for _, holding := range holdings {
+		totalValue = totalValue.Add(holding.Price.Mul(holding.Amount))
+	}
+	return Account{holdings: holdings, value: totalValue}
 }
 
 // An Asset is a string type used to identify your assets.
@@ -39,16 +44,12 @@ type Trade struct {
 // holdings.
 func (a Account) Balance(index map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
-	totalHoldings := decimal.Zero
-	for _, holding := range a.holdings {
-		totalHoldings = totalHoldings.Add(holding.Price.Mul(holding.Amount))
-	}
 
 	trades := map[Asset]Trade{}
 
 	for asset, weight := range index {
 		amountRequired :=
-			totalHoldings.
+			a.value.
 				Mul(weight).
 				Div(a.holdings[asset].Price).
 				Sub(a.holdings[asset].Amount)
@@ -68,10 +69,6 @@ func (a Account) Balance(index map[Asset]decimal.Decimal) map[Asset]Trade {
 // assets not present in holdings as long as they are included in the pricelist.
 func (a Account) BalanceNew(index, pricelist map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
-	totalHoldings := decimal.Zero
-	for _, holding := range a.holdings {
-		totalHoldings = totalHoldings.Add(holding.Price.Mul(holding.Amount))
-	}
 
 	trades := map[Asset]Trade{}
 
@@ -79,13 +76,13 @@ func (a Account) BalanceNew(index, pricelist map[Asset]decimal.Decimal) map[Asse
 	for asset, weight := range index {
 		if holding, ok := a.holdings[asset]; ok {
 			amountRequired =
-				totalHoldings.
+				a.value.
 					Mul(weight).
 					Div(holding.Price).
 					Sub(holding.Amount)
 		} else {
 			amountRequired =
-				totalHoldings.
+				a.value.
 					Mul(weight).
 					Div(pricelist[asset])
 		}
