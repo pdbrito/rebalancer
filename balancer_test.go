@@ -25,7 +25,12 @@ func TestAccount_Balance(t *testing.T) {
 		"BTC": decimal.NewFromFloat(0.7),
 	}
 
-	got := Account.Balance(index)
+	pricelist := map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(200),
+		"BTC": decimal.NewFromFloat(5000),
+	}
+
+	got := Account.Balance(index, pricelist)
 	want := map[Asset]Trade{
 		"ETH": {Action: "sell", Amount: decimal.NewFromFloat(10.25)},
 		"BTC": {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
@@ -34,7 +39,7 @@ func TestAccount_Balance(t *testing.T) {
 	assertSameTrades(t, got, want)
 }
 
-func TestAccount_BalanceNew(t *testing.T) {
+func TestAccount_Balance_IntoNewAssets(t *testing.T) {
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(42),
@@ -60,7 +65,7 @@ func TestAccount_BalanceNew(t *testing.T) {
 
 	Account := NewAccount(holdings)
 
-	got := Account.BalanceNew(index, pricelist)
+	got := Account.Balance(index, pricelist)
 	want := map[Asset]Trade{
 		"ETH":  {Action: "sell", Amount: decimal.NewFromFloat(33.6)},
 		"BTC":  {Action: "buy", Amount: decimal.NewFromFloat(0.84)},
@@ -116,14 +121,19 @@ func ExampleAccount_Balance() {
 		},
 	}
 
-	desiredWeights := map[Asset]decimal.Decimal{
+	targetIndex := map[Asset]decimal.Decimal{
 		"ETH": decimal.NewFromFloat(0.5),
 		"BTC": decimal.NewFromFloat(0.5),
 	}
 
 	Account := NewAccount(holdings)
 
-	requiredTrades := Account.Balance(desiredWeights)
+	pricelist := map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(350),
+		"BTC": decimal.NewFromFloat(5000),
+	}
+
+	requiredTrades := Account.Balance(targetIndex, pricelist)
 
 	for asset, trade := range requiredTrades {
 		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
@@ -132,46 +142,6 @@ func ExampleAccount_Balance() {
 	// Unordered output:
 	// sell 6.4285714285714286 ETH
 	// buy 0.45 BTC
-}
-
-func ExampleAccount_BalanceNew() {
-	holdings := map[Asset]Holding{
-		"ETH": {
-			Amount: decimal.NewFromFloat(42),
-			Price:  decimal.NewFromFloat(200),
-		},
-	}
-
-	desiredWeights := map[Asset]decimal.Decimal{
-		"ETH":  decimal.NewFromFloat(0.2),
-		"BTC":  decimal.NewFromFloat(0.2),
-		"IOTA": decimal.NewFromFloat(0.2),
-		"BAT":  decimal.NewFromFloat(0.2),
-		"XLM":  decimal.NewFromFloat(0.2),
-	}
-
-	pricelist := map[Asset]decimal.Decimal{
-		"ETH":  decimal.NewFromFloat(200),
-		"BTC":  decimal.NewFromFloat(2000),
-		"IOTA": decimal.NewFromFloat(0.3),
-		"BAT":  decimal.NewFromFloat(0.12),
-		"XLM":  decimal.NewFromFloat(0.2),
-	}
-
-	Account := NewAccount(holdings)
-
-	requiredTrades := Account.BalanceNew(desiredWeights, pricelist)
-
-	for asset, trade := range requiredTrades {
-		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
-	}
-
-	// Unordered output:
-	// sell 33.6 ETH
-	// buy 0.84 BTC
-	// buy 5600 IOTA
-	// buy 14000 BAT
-	// buy 8400 XLM
 }
 
 func BenchmarkBalance(b *testing.B) {
@@ -192,6 +162,11 @@ func BenchmarkBalance(b *testing.B) {
 
 		Account := NewAccount(holdings)
 
-		_ = Account.Balance(index)
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_ = Account.Balance(index, pricelist)
 	}
 }
