@@ -8,28 +8,28 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// An Account has holdings
+// An Account has holdings, a pricelist and a calculated value
 type Account struct {
-	holdings map[Asset]Holding
-	value    decimal.Decimal
+	holdings  map[Asset]Holding
+	pricelist map[Asset]decimal.Decimal
+	value     decimal.Decimal
 }
 
 // NewAccount returns a new Account struct
-func NewAccount(holdings map[Asset]Holding) Account {
+func NewAccount(holdings map[Asset]Holding, pricelist map[Asset]decimal.Decimal) Account {
 	totalValue := decimal.Zero
-	for _, holding := range holdings {
-		totalValue = totalValue.Add(holding.Price.Mul(holding.Amount))
+	for asset, holding := range holdings {
+		totalValue = totalValue.Add(pricelist[asset].Mul(holding.Amount))
 	}
-	return Account{holdings: holdings, value: totalValue}
+	return Account{holdings: holdings, pricelist: pricelist, value: totalValue}
 }
 
 // An Asset is a string type used to identify your assets.
 type Asset string
 
-// A Holding represents a current amount and value.
+// A Holding represents an Amount.
 type Holding struct {
 	Amount decimal.Decimal
-	Price  decimal.Decimal
 }
 
 // A Trade represents a buy or sell action of a certain amount
@@ -39,17 +39,15 @@ type Trade struct {
 }
 
 // Balance will return a map[Asset]Trade which will balance the passed in
-// holdings to match the passed in index. Assumes rebalancing of existing
-// assets - will panic if there are assets in index that are not present in
-// holdings.
-func (a Account) Balance(index, pricelist map[Asset]decimal.Decimal) map[Asset]Trade {
+// holdings to match the passed in target index.
+func (a Account) Balance(index map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
 	trades := map[Asset]Trade{}
 
 	amountRequired := decimal.Zero
 	for asset, percentage := range index {
 
-		amountRequired = a.value.Mul(percentage).Div(pricelist[asset])
+		amountRequired = a.value.Mul(percentage).Div(a.pricelist[asset])
 
 		if holding, ok := a.holdings[asset]; ok {
 			amountRequired = amountRequired.Sub(holding.Amount)

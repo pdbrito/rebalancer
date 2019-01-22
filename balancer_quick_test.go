@@ -30,8 +30,8 @@ func (f fakeAccount) Generate(rand *rand.Rand, size int) reflect.Value {
 
 func TestBalancer_ResultingIndexEqualToInputIndex(t *testing.T) {
 	assertion := func(f fakeAccount) bool {
-		Account := NewAccount(f.Holdings)
-		trades := Account.Balance(f.Index, f.Pricelist)
+		Account := NewAccount(f.Holdings, f.Pricelist)
+		trades := Account.Balance(f.Index)
 
 		holdingsAfter := execute(trades, f.Holdings)
 
@@ -44,10 +44,10 @@ func TestBalancer_ResultingIndexEqualToInputIndex(t *testing.T) {
 		if e, ok := err.(*quick.CheckError); ok {
 			for _, value := range e.In {
 				f := value.(fakeAccount)
-				Account := NewAccount(f.Holdings)
+				Account := NewAccount(f.Holdings, f.Pricelist)
 				fmt.Printf("Holdings: %v\n", f.Holdings)
 				fmt.Printf("Desired index: %v\n", f.Index)
-				fmt.Printf("Trades: %v\n", Account.Balance(f.Index, f.Pricelist))
+				fmt.Printf("Trades: %v\n", Account.Balance(f.Index))
 			}
 		}
 
@@ -82,7 +82,6 @@ func generateHoldingsNumbering(n int) map[Asset]Holding {
 		assetKey := strconv.Itoa(i)
 		holdings[Asset(assetKey)] = Holding{
 			Amount: decimal.NewFromFloat(rand.Float64() * 1000),
-			Price:  decimal.NewFromFloat(rand.Float64() * 1000),
 		}
 	}
 	return holdings
@@ -124,7 +123,6 @@ func execute(trades map[Asset]Trade, holdings map[Asset]Holding) map[Asset]Holdi
 
 		res[asset] = Holding{
 			Amount: quantityAfterTrade,
-			Price:  holdings[asset].Price,
 		}
 	}
 	return res
