@@ -1,7 +1,7 @@
 // Package balancer provides functionality to balance investment assets to a
 // target index. This is accomplished by calculating the current percentage
 // allocation of assets and then the trades necessary to match the specified
-// index.
+// target index.
 package balancer
 
 import (
@@ -40,12 +40,12 @@ type Trade struct {
 
 // Balance will return a map[Asset]Trade which will balance the passed in
 // holdings to match the passed in target index.
-func (a Account) Balance(index map[Asset]decimal.Decimal) map[Asset]Trade {
+func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
 	trades := map[Asset]Trade{}
 
 	amountRequired := decimal.Zero
-	for asset, percentage := range index {
+	for asset, percentage := range targetIndex {
 
 		amountRequired = a.value.Mul(percentage).Div(a.pricelist[asset])
 
