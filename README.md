@@ -17,12 +17,15 @@ You can model your assets thusly:
 holdings := map[Asset]Holding{
     "ETH": {
         Amount: decimal.NewFromFloat(20),
-        Price:  decimal.NewFromFloat(350),
     },
     "BTC": {
         Amount: decimal.NewFromFloat(0.5),
-        Price:  decimal.NewFromFloat(50000)},
     }
+}
+
+pricelist := map[Asset]Decimal.decimal{
+	"ETH": decimal.NewFromFloat(350),
+	"BTC": decimal.NewFromFloat(5000),
 }
 ```
 
@@ -32,27 +35,31 @@ The current value of all your assets is:
 0.5 x 5000 + 20 x 350 = 9500
 ```
 
-The current weighting of each asset is:
+The current percentage of each asset is:
 
 ```
 ETH = 20 * 350 / 9500 = 0.736842...
 BTC = 0.5 * 2500 / 9500 = 0.263157...
 ```
 
-If you wanted to change this to a 50/50 split, first model your target weights:
+If you wanted to change this to a 50/50 split, first model your target index:
 
 ```go
-desiredWeights := map[Asset]decimal.Decimal{
+targetIndex := map[Asset]decimal.Decimal{
     "ETH": decimal.NewFromFloat(0.5),
     "BTC": decimal.NewFromFloat(0.5),
 }
 ```
 
-Passing your current holdings and your desired weighting to the Balance method
-will return the trades necessary to rebalance your portfolio as a `map[Asset]Trade`.
+Creating a new account from your holdings and calling the Balance method on the
+account will return the trades necessary to rebalance your portfolio as a 
+`map[Asset]Trade`.
+
+Make sure to include your target index and a pricelist.
 
 ```go
-requiredTrades := balancer.Balance(holdings, desiredWeights)
+Account := balance.NewAccount(holdings)
+requiredTrades := Account.Balance(targetIndex)
     
 for asset, trade := range requiredTrades {
 	fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
@@ -62,9 +69,9 @@ for asset, trade := range requiredTrades {
 // buy 0.45 BTC  
 ```
 
-### BalanceNew
+### Balancing into new assets
 
-BalanceNew allows you to balance one or more holdings into several other new 
+Balance also allows you to balance one or more holdings into several other new 
 assets, as long as these new assets are included in a pricelist and passed 
 through:
 
@@ -76,7 +83,7 @@ holdings := map[Asset]Holding{
     },
 }
 
-desiredWeights := map[Asset]decimal.Decimal{
+targetIndex := map[Asset]decimal.Decimal{
     "ETH":  decimal.NewFromFloat(0.2),
     "BTC":  decimal.NewFromFloat(0.2),
     "IOTA": decimal.NewFromFloat(0.2),
@@ -92,7 +99,9 @@ pricelist := map[Asset]decimal.Decimal{
     "XLM":  decimal.NewFromFloat(0.2),
 }
 
-requiredTrades := BalanceNew(holdings, desiredWeights, pricelist)
+Account := balance.NewAccount(holdings)
+
+requiredTrades := Account.Balance(targetIndex, pricelist)
 
 for asset, trade := range requiredTrades {
     fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)

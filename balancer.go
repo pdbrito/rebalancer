@@ -1,20 +1,35 @@
 // Package balancer provides functionality to balance investment assets to a
 // target index. This is accomplished by calculating the current percentage
 // allocation of assets and then the trades necessary to match the specified
-// index.
+// target index.
 package balancer
 
 import (
 	"github.com/shopspring/decimal"
 )
 
+// An Account has holdings, a pricelist and a calculated value
+type Account struct {
+	holdings  map[Asset]Holding
+	pricelist map[Asset]decimal.Decimal
+	value     decimal.Decimal
+}
+
+// NewAccount returns a new Account struct
+func NewAccount(holdings map[Asset]Holding, pricelist map[Asset]decimal.Decimal) Account {
+	totalValue := decimal.Zero
+	for asset, holding := range holdings {
+		totalValue = totalValue.Add(pricelist[asset].Mul(holding.Amount))
+	}
+	return Account{holdings: holdings, pricelist: pricelist, value: totalValue}
+}
+
 // An Asset is a string type used to identify your assets.
 type Asset string
 
-// A Holding represents a current amount and value.
+// A Holding represents an Amount.
 type Holding struct {
 	Amount decimal.Decimal
-	Price  decimal.Decimal
 }
 
 // A Trade represents a buy or sell action of a certain amount
@@ -24,60 +39,18 @@ type Trade struct {
 }
 
 // Balance will return a map[Asset]Trade which will balance the passed in
-// holdings to match the passed in index. Assumes rebalancing of existing
-// assets - will panic if there are assets in index that are not present in
-// holdings.
-func Balance(holdings map[Asset]Holding, index map[Asset]decimal.Decimal) map[Asset]Trade {
+// holdings to match the passed in target index.
+func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) map[Asset]Trade {
 	//validate assumptions; only unique assets etc
-	totalHoldings := decimal.Zero
-	for _, holding := range holdings {
-		totalHoldings = totalHoldings.Add(holding.Price.Mul(holding.Amount))
-	}
-
-	trades := map[Asset]Trade{}
-
-	for asset, weight := range index {
-		amountRequired :=
-			totalHoldings.
-				Mul(weight).
-				Div(holdings[asset].Price).
-				Sub(holdings[asset].Amount)
-
-		if amountRequired.IsNegative() {
-			trades[asset] = Trade{"sell", amountRequired.Abs()}
-			continue
-		}
-		trades[asset] = Trade{"buy", amountRequired.Abs()}
-	}
-
-	return trades
-}
-
-// BalanceNew will return a map[Asset]Trade which will balance the passed in
-// holdings to match the passed in index. BalanceNew can handle rebalancing of
-// assets not present in holdings as long as they are included in the pricelist.
-func BalanceNew(holdings map[Asset]Holding, index, pricelist map[Asset]decimal.Decimal) map[Asset]Trade {
-	//validate assumptions; only unique assets etc
-	totalHoldings := decimal.Zero
-	for _, holding := range holdings {
-		totalHoldings = totalHoldings.Add(holding.Price.Mul(holding.Amount))
-	}
-
 	trades := map[Asset]Trade{}
 
 	amountRequired := decimal.Zero
-	for asset, weight := range index {
-		if holding, ok := holdings[asset]; ok {
-			amountRequired =
-				totalHoldings.
-					Mul(weight).
-					Div(holding.Price).
-					Sub(holding.Amount)
-		} else {
-			amountRequired =
-				totalHoldings.
-					Mul(weight).
-					Div(pricelist[asset])
+	for asset, percentage := range targetIndex {
+
+		amountRequired = a.value.Mul(percentage).Div(a.pricelist[asset])
+
+		if holding, ok := a.holdings[asset]; ok {
+			amountRequired = amountRequired.Sub(holding.Amount)
 		}
 
 		if amountRequired.IsNegative() {
