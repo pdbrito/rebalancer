@@ -42,7 +42,7 @@ ETH = 20 * 350 / 9500 = 0.736842...
 BTC = 0.5 * 2500 / 9500 = 0.263157...
 ```
 
-If you wanted to change this to a 50/50 split, first model your target index:
+If you wanted to change this to a 50/50 split, we need to model a target index:
 
 ```go
 targetIndex := map[Asset]decimal.Decimal{
@@ -51,14 +51,12 @@ targetIndex := map[Asset]decimal.Decimal{
 }
 ```
 
-Creating a new account from your holdings and calling the Balance method on the
-account will return the trades necessary to rebalance your portfolio as a 
-`map[Asset]Trade`.
-
-Make sure to include your target index and a pricelist.
+Create a new balance.Account with your holdings and pricelist. Then call  
+Account.Balance(targetIndex) to receive the trades necessary to rebalance your 
+portfolio as a `map[Asset]Trade`.
 
 ```go
-Account := balance.NewAccount(holdings)
+Account := balance.NewAccount(holdings, pricelist)
 requiredTrades := Account.Balance(targetIndex)
     
 for asset, trade := range requiredTrades {
@@ -72,14 +70,12 @@ for asset, trade := range requiredTrades {
 ### Balancing into new assets
 
 Balance also allows you to balance one or more holdings into several other new 
-assets, as long as these new assets are included in a pricelist and passed 
-through:
+assets, as long as these new assets are included in your account pricelist:
 
 ```go
 holdings := map[Asset]Holding{
     "ETH": {
         Amount: decimal.NewFromFloat(42),
-        Price:  decimal.NewFromFloat(200),
     },
 }
 
@@ -99,9 +95,9 @@ pricelist := map[Asset]decimal.Decimal{
     "XLM":  decimal.NewFromFloat(0.2),
 }
 
-Account := balance.NewAccount(holdings)
+Account := balance.NewAccount(holdings, pricelist)
 
-requiredTrades := Account.Balance(targetIndex, pricelist)
+requiredTrades := Account.Balance(targetIndex)
 
 for asset, trade := range requiredTrades {
     fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
