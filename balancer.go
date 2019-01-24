@@ -5,6 +5,7 @@
 package balancer
 
 import (
+	"fmt"
 	"github.com/shopspring/decimal"
 )
 
@@ -40,8 +41,19 @@ type Trade struct {
 
 // Balance will return a map[Asset]Trade which will balance the passed in
 // holdings to match the passed in target index.
-func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) map[Asset]Trade {
-	//validate assumptions; only unique assets etc
+func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade, error) {
+	indexTotal := decimal.Zero
+	for _, percentage := range targetIndex {
+		indexTotal = indexTotal.Add(percentage)
+	}
+	if !indexTotal.Equal(decimal.NewFromFloat(1)) {
+		return nil, fmt.Errorf(
+			"targetIndex should sum to 1, got %v from %v",
+			indexTotal,
+			targetIndex,
+		)
+	}
+
 	trades := map[Asset]Trade{}
 
 	amountRequired := decimal.Zero
@@ -60,5 +72,5 @@ func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) map[Asset]Trade 
 		trades[asset] = Trade{"buy", amountRequired.Abs()}
 	}
 
-	return trades
+	return trades, nil
 }

@@ -29,7 +29,12 @@ func TestAccount_Balance(t *testing.T) {
 
 	Account := NewAccount(holdings, pricelist)
 
-	got := Account.Balance(targetIndex)
+	got, err := Account.Balance(targetIndex)
+
+	if err != nil {
+		t.Error("got an error but didn't want one")
+	}
+
 	want := map[Asset]Trade{
 		"ETH": {Action: "sell", Amount: decimal.NewFromFloat(10.25)},
 		"BTC": {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
@@ -63,7 +68,12 @@ func TestAccount_Balance_IntoNewAssets(t *testing.T) {
 
 	Account := NewAccount(holdings, pricelist)
 
-	got := Account.Balance(targetIndex)
+	got, err := Account.Balance(targetIndex)
+
+	if err != nil {
+		t.Error("got an error but didn't want one")
+	}
+
 	want := map[Asset]Trade{
 		"ETH":  {Action: "sell", Amount: decimal.NewFromFloat(33.6)},
 		"BTC":  {Action: "buy", Amount: decimal.NewFromFloat(0.84)},
@@ -73,6 +83,32 @@ func TestAccount_Balance_IntoNewAssets(t *testing.T) {
 	}
 
 	assertSameTrades(t, got, want)
+}
+
+func TestAccount_Balance_ErrorsWhenSumOfTargetIndexIsNot1(t *testing.T) {
+	holdings := map[Asset]Holding{
+		"ETH": {
+			Amount: decimal.NewFromFloat(42),
+		},
+	}
+
+	targetIndex := map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(0.2),
+		"BTC": decimal.NewFromFloat(0.2),
+	}
+
+	pricelist := map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(200),
+		"BTC": decimal.NewFromFloat(2000),
+	}
+
+	Account := NewAccount(holdings, pricelist)
+
+	_, err := Account.Balance(targetIndex)
+
+	if err == nil {
+		t.Error("wanted an error but didn't get one")
+	}
 }
 
 func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
@@ -85,11 +121,10 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 	for asset, wantTrade := range want {
 		gotTrade, exists := got[asset]
 		if !exists {
-			t.Errorf("asset %s missing from trade list", asset)
-			return
+			t.Fatalf("asset %s missing from trade list", asset)
 		}
 		if gotTrade.Action != wantTrade.Action {
-			t.Errorf(
+			t.Fatalf(
 				"got a trade action of %s, want %s for asset %s",
 				gotTrade.Action,
 				wantTrade.Action,
@@ -97,7 +132,7 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 			)
 		}
 		if !gotTrade.Amount.Equal(wantTrade.Amount) {
-			t.Errorf(
+			t.Fatalf(
 				"got %v want %v for trade of asset %s",
 				gotTrade.Amount,
 				wantTrade.Amount,
@@ -129,7 +164,7 @@ func ExampleAccount_Balance() {
 
 	Account := NewAccount(holdings, pricelist)
 
-	requiredTrades := Account.Balance(targetIndex)
+	requiredTrades, _ := Account.Balance(targetIndex)
 
 	for asset, trade := range requiredTrades {
 		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
@@ -162,6 +197,6 @@ func BenchmarkBalance(b *testing.B) {
 
 		Account := NewAccount(holdings, pricelist)
 
-		_ = Account.Balance(targetIndex)
+		_, _ = Account.Balance(targetIndex)
 	}
 }
