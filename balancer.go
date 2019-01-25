@@ -43,8 +43,14 @@ type Trade struct {
 // holdings to match the passed in target index.
 func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade, error) {
 	indexTotal := decimal.Zero
-	for _, percentage := range targetIndex {
+	for asset, percentage := range targetIndex {
 		indexTotal = indexTotal.Add(percentage)
+		if _, ok := a.pricelist[asset]; !ok {
+			return nil, fmt.Errorf(
+				"targetIndex contains asset missing from the pricelist: %s",
+				asset,
+			)
+		}
 	}
 	if !indexTotal.Equal(decimal.NewFromFloat(1)) {
 		return nil, fmt.Errorf(

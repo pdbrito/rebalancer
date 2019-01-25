@@ -97,6 +97,17 @@ func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
 				"BTC": decimal.NewFromFloat(0.2),
 			},
 		},
+		{
+			name:        "target index is empty",
+			targetIndex: map[Asset]decimal.Decimal{},
+		},
+		{
+			name: "target index has an asset missing from the pricelist",
+			targetIndex: map[Asset]decimal.Decimal{
+				"ETH": decimal.NewFromFloat(0.8),
+				"BAT": decimal.NewFromFloat(0.2),
+			},
+		},
 	}
 
 	holdings := map[Asset]Holding{
@@ -114,6 +125,7 @@ func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			_, err := Account.Balance(tt.targetIndex)
 
 			if err == nil {
