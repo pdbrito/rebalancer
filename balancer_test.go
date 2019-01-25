@@ -85,16 +85,24 @@ func TestAccount_Balance_IntoNewAssets(t *testing.T) {
 	assertSameTrades(t, got, want)
 }
 
-func TestAccount_Balance_ErrorsWhenSumOfTargetIndexIsNot1(t *testing.T) {
+func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
+	testCases := []struct {
+		name        string
+		targetIndex map[Asset]decimal.Decimal
+	}{
+		{
+			name: "target index does not sum to 1",
+			targetIndex: map[Asset]decimal.Decimal{
+				"ETH": decimal.NewFromFloat(0.2),
+				"BTC": decimal.NewFromFloat(0.2),
+			},
+		},
+	}
+
 	holdings := map[Asset]Holding{
 		"ETH": {
 			Amount: decimal.NewFromFloat(42),
 		},
-	}
-
-	targetIndex := map[Asset]decimal.Decimal{
-		"ETH": decimal.NewFromFloat(0.2),
-		"BTC": decimal.NewFromFloat(0.2),
 	}
 
 	pricelist := map[Asset]decimal.Decimal{
@@ -104,11 +112,16 @@ func TestAccount_Balance_ErrorsWhenSumOfTargetIndexIsNot1(t *testing.T) {
 
 	Account := NewAccount(holdings, pricelist)
 
-	_, err := Account.Balance(targetIndex)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Account.Balance(tt.targetIndex)
 
-	if err == nil {
-		t.Error("wanted an error but didn't get one")
+			if err == nil {
+				t.Error("wanted an error but didn't get one")
+			}
+		})
 	}
+
 }
 
 func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
