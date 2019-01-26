@@ -7,6 +7,7 @@ package balancer
 import (
 	"fmt"
 	"github.com/shopspring/decimal"
+	"strings"
 )
 
 // An Account has holdings, a pricelist and a calculated value
@@ -14,6 +15,25 @@ type Account struct {
 	holdings  map[Asset]Holding
 	pricelist map[Asset]decimal.Decimal
 	value     decimal.Decimal
+}
+
+// Holdings are a map[Asset]Holding
+type Holdings map[Asset]Holding
+
+// NewHoldings validates and returns a new Holdings struct
+func NewHoldings(holdings map[Asset]Holding) (Holdings, error) {
+	if len(holdings) == 0 || holdings == nil {
+		return nil, fmt.Errorf("holdings must not be nil or empty")
+	}
+	for asset, holding := range holdings {
+		if holding.Amount.Equal(decimal.Zero) {
+			return nil, fmt.Errorf("holdings must have positive amount, %s has amount of %s", asset, holding.Amount)
+		}
+		if string(asset) != strings.ToUpper(string(asset)) {
+			return nil, fmt.Errorf("holding assets must be uppercase")
+		}
+	}
+	return holdings, nil
 }
 
 // NewAccount returns a new Account struct

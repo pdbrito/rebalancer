@@ -43,6 +43,45 @@ func TestAccount_Balance(t *testing.T) {
 	assertSameTrades(t, got, want)
 }
 
+func TestNewHoldings(t *testing.T) {
+	testCases := []struct {
+		name     string
+		holdings map[Asset]Holding
+	}{
+		{
+			name:     "holdings must not be empty",
+			holdings: map[Asset]Holding{},
+		},
+		{
+			name: "each holding must have a positive amount",
+			holdings: map[Asset]Holding{
+				"ETH": {
+					Amount: decimal.NewFromFloat(-5),
+				},
+			},
+		},
+		{
+			name: "holding assets should be uppercase and unique",
+			holdings: map[Asset]Holding{
+				"eth": {
+					Amount: decimal.NewFromFloat(5),
+				},
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := NewHoldings(tt.holdings)
+
+			if err == nil {
+				t.Error("wanted an error but didn't get one")
+			}
+		})
+	}
+}
+
 func TestAccount_Balance_IntoNewAssets(t *testing.T) {
 	holdings := map[Asset]Holding{
 		"ETH": {
@@ -133,7 +172,6 @@ func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
