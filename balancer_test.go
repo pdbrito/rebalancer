@@ -4,6 +4,7 @@ import (
 	"fmt"
 	. "github.com/pdbrito/balancer"
 	"github.com/shopspring/decimal"
+	"reflect"
 	"testing"
 )
 
@@ -44,6 +45,22 @@ func TestAccount_Balance(t *testing.T) {
 }
 
 func TestNewHoldings(t *testing.T) {
+	got, err := NewHoldings(map[Asset]Holding{
+		"ETH": {Amount: decimal.NewFromFloat(5)},
+	})
+
+	if err != nil {
+		t.Error("got an error but didn't want one")
+	}
+
+	want := Holdings{"ETH": {Amount: decimal.NewFromFloat(5)}}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v want %v", got, want)
+	}
+}
+
+func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
 	testCases := []struct {
 		name     string
 		holdings map[Asset]Holding
