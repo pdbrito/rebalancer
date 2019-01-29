@@ -5,6 +5,7 @@
 package balancer
 
 import (
+	"errors"
 	"fmt"
 	"github.com/shopspring/decimal"
 	"strings"
@@ -20,17 +21,29 @@ type Account struct {
 // Holdings are a map[Asset]Holding
 type Holdings map[Asset]Holding
 
+var ErrEmptyHoldings = errors.New("holdings must not be empty")
+var ErrInvalidAsset = errors.New("holding assets must be uppercase")
+
+type ErrInvalidAssetAmount struct {
+	Asset  Asset
+	Amount decimal.Decimal
+}
+
+func (e ErrInvalidAssetAmount) Error() string {
+	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
+}
+
 // NewHoldings validates and returns a new Holdings struct
 func NewHoldings(holdings map[Asset]Holding) (Holdings, error) {
 	if len(holdings) == 0 {
-		return nil, fmt.Errorf("holdings must not be empty")
+		return nil, ErrEmptyHoldings
 	}
 	for asset, holding := range holdings {
 		if holding.Amount.LessThan(decimal.Zero) || holding.Amount.Equal(decimal.Zero) {
-			return nil, fmt.Errorf("holdings must have positive amount, %s has amount of %s", asset, holding.Amount)
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding.Amount}
 		}
 		if string(asset) != strings.ToUpper(string(asset)) {
-			return nil, fmt.Errorf("holding assets must be uppercase")
+			return nil, ErrInvalidAsset
 		}
 	}
 	return holdings, nil

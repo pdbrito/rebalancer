@@ -60,22 +60,31 @@ func TestNewHoldings(t *testing.T) {
 	}
 }
 
+func TestNewHoldings_ErrorsOnNonPositiveHoldingAmount(t *testing.T) {
+	asset := Asset("ETH")
+	amount := decimal.NewFromFloat(-5)
+
+	_, err := NewHoldings(map[Asset]Holding{
+		asset: {Amount: amount},
+	})
+
+	want := ErrInvalidAssetAmount{Asset: asset, Amount: amount}
+
+	if err != want {
+		t.Errorf("got %v, want %v", err, want)
+	}
+}
+
 func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
 	testCases := []struct {
 		name     string
 		holdings map[Asset]Holding
+		err      error
 	}{
 		{
 			name:     "holdings must not be empty",
 			holdings: map[Asset]Holding{},
-		},
-		{
-			name: "each holding must have a positive amount",
-			holdings: map[Asset]Holding{
-				"ETH": {
-					Amount: decimal.NewFromFloat(-5),
-				},
-			},
+			err:      ErrEmptyHoldings,
 		},
 		{
 			name: "holding assets should be uppercase and unique",
@@ -84,16 +93,20 @@ func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
 					Amount: decimal.NewFromFloat(5),
 				},
 			},
+			err: ErrInvalidAsset,
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			_, err := NewHoldings(tt.holdings)
 
 			if err == nil {
 				t.Error("wanted an error but didn't get one")
+			}
+
+			if err != tt.err {
+				t.Errorf("got %v want %v", err, tt.err)
 			}
 		})
 	}
@@ -181,7 +194,6 @@ func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			_, err := Account.Balance(tt.targetIndex)
 
 			if err == nil {
