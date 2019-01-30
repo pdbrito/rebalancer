@@ -60,6 +60,20 @@ func TestNewHoldings(t *testing.T) {
 	}
 }
 
+func TestErrInvalidAssetAmount_Error(t *testing.T) {
+	asset := Asset("ETH")
+	amount := decimal.NewFromFloat(-5)
+
+	err := ErrInvalidAssetAmount{Asset: asset, Amount: amount}
+
+	want := "ETH needs positive amount, not -5"
+	got := err.Error()
+
+	if got != want {
+		t.Errorf("got %s want %s", got, want)
+	}
+}
+
 func TestNewHoldings_ErrorsOnNonPositiveHoldingAmount(t *testing.T) {
 	asset := Asset("ETH")
 	amount := decimal.NewFromFloat(-5)
