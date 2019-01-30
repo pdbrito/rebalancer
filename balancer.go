@@ -21,15 +21,20 @@ type Account struct {
 // Holdings are a map[Asset]Holding
 type Holdings map[Asset]Holding
 
+// ErrEmptyHoldings indicated an empty holdings was passed to NewHoldings
 var ErrEmptyHoldings = errors.New("holdings must not be empty")
+
+// ErrInvalidAsset indicates an Asset is not uppercase: "eth" vs "ETH"
 var ErrInvalidAsset = errors.New("holding assets must be uppercase")
 
-type ErrInvalidAssetAmount struct {
+// ErrInvalidHoldingAmount indicates an invalid Holding.Amount of 0 or below
+type ErrInvalidHoldingAmount struct {
 	Asset  Asset
 	Amount decimal.Decimal
 }
 
-func (e ErrInvalidAssetAmount) Error() string {
+// Error formats the error message for ErrInvalidHoldingAmount
+func (e ErrInvalidHoldingAmount) Error() string {
 	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
 }
 
@@ -40,7 +45,7 @@ func NewHoldings(holdings map[Asset]Holding) (Holdings, error) {
 	}
 	for asset, holding := range holdings {
 		if holding.Amount.LessThan(decimal.Zero) || holding.Amount.Equal(decimal.Zero) {
-			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding.Amount}
+			return nil, ErrInvalidHoldingAmount{Asset: asset, Amount: holding.Amount}
 		}
 		if string(asset) != strings.ToUpper(string(asset)) {
 			return nil, ErrInvalidAsset
