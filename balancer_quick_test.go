@@ -13,7 +13,7 @@ import (
 )
 
 type fakeAccount struct {
-	Holdings    map[Asset]Holding
+	Holdings    map[Asset]decimal.Decimal
 	TargetIndex map[Asset]decimal.Decimal
 	Pricelist   map[Asset]decimal.Decimal
 }
@@ -60,11 +60,11 @@ func TestBalancer_ResultingIndexEqualToTargetIndex(t *testing.T) {
 	}
 }
 
-func calculateIndex(holdings map[Asset]Holding, pricelist map[Asset]decimal.Decimal) map[Asset]decimal.Decimal {
+func calculateIndex(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) map[Asset]decimal.Decimal {
 	index := make(map[Asset]decimal.Decimal)
 	value := value(holdings, pricelist)
 	for asset, holding := range holdings {
-		index[asset] = pricelist[asset].Mul(holding.Amount).Div(value)
+		index[asset] = pricelist[asset].Mul(holding).Div(value)
 	}
 	return index
 }
@@ -81,18 +81,16 @@ func indexesAreEqual(i1, i2 map[Asset]decimal.Decimal) bool {
 	return true
 }
 
-func generateHoldingsNumbering(n int) map[Asset]Holding {
-	holdings := make(map[Asset]Holding)
+func generateHoldingsNumbering(n int) map[Asset]decimal.Decimal {
+	holdings := make(map[Asset]decimal.Decimal)
 	for i := 0; i < n; i++ {
 		assetKey := strconv.Itoa(i)
-		holdings[Asset(assetKey)] = Holding{
-			Amount: decimal.NewFromFloat(rand.Float64() * 1000),
-		}
+		holdings[Asset(assetKey)] = decimal.NewFromFloat(rand.Float64() * 1000)
 	}
 	return holdings
 }
 
-func generateTargetIndexForHoldings(holdings map[Asset]Holding) map[Asset]decimal.Decimal {
+func generateTargetIndexForHoldings(holdings map[Asset]decimal.Decimal) map[Asset]decimal.Decimal {
 	targetIndex := make(map[Asset]decimal.Decimal)
 
 	numberOfAssets := len(holdings)
@@ -107,15 +105,15 @@ func generateTargetIndexForHoldings(holdings map[Asset]Holding) map[Asset]decima
 	return targetIndex
 }
 
-func value(holdings map[Asset]Holding, pricelist map[Asset]decimal.Decimal) (sum decimal.Decimal) {
+func value(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) (sum decimal.Decimal) {
 	for asset, holding := range holdings {
-		sum = sum.Add(holding.Amount.Mul(pricelist[asset]))
+		sum = sum.Add(holding.Mul(pricelist[asset]))
 	}
 	return sum
 }
 
-func execute(trades map[Asset]Trade, holdings map[Asset]Holding) map[Asset]Holding {
-	res := map[Asset]Holding{}
+func execute(trades map[Asset]Trade, holdings map[Asset]decimal.Decimal) map[Asset]decimal.Decimal {
+	res := map[Asset]decimal.Decimal{}
 
 	for asset, trade := range trades {
 
@@ -124,16 +122,15 @@ func execute(trades map[Asset]Trade, holdings map[Asset]Holding) map[Asset]Holdi
 			modifier = decimal.New(-1, 0)
 		}
 
-		quantityAfterTrade := holdings[asset].Amount.Add(trade.Amount.Mul(modifier))
+		quantityAfterTrade := holdings[asset].Add(trade.Amount.Mul(modifier))
 
-		res[asset] = Holding{
-			Amount: quantityAfterTrade,
-		}
+		res[asset] = quantityAfterTrade
+
 	}
 	return res
 }
 
-func generatePricelistForHoldings(holdings map[Asset]Holding) map[Asset]decimal.Decimal {
+func generatePricelistForHoldings(holdings map[Asset]decimal.Decimal) map[Asset]decimal.Decimal {
 	pricelist := map[Asset]decimal.Decimal{}
 	for asset := range holdings {
 		pricelist[asset] = decimal.NewFromFloat(rand.Float64() * 1000)

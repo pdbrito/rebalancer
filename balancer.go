@@ -13,13 +13,13 @@ import (
 
 // An Account has holdings, a pricelist and a calculated value
 type Account struct {
-	holdings  map[Asset]Holding
+	holdings  map[Asset]decimal.Decimal
 	pricelist map[Asset]decimal.Decimal
 	value     decimal.Decimal
 }
 
 // Holdings are a map[Asset]Holding
-type Holdings map[Asset]Holding
+type Holdings map[Asset]decimal.Decimal
 
 // ErrEmptyHoldings indicated an empty holdings was passed to NewHoldings
 var ErrEmptyHoldings = errors.New("holdings must not be empty")
@@ -39,13 +39,13 @@ func (e ErrInvalidHoldingAmount) Error() string {
 }
 
 // NewHoldings validates and returns a new Holdings struct
-func NewHoldings(holdings map[Asset]Holding) (Holdings, error) {
+func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
 	if len(holdings) == 0 {
 		return nil, ErrEmptyHoldings
 	}
 	for asset, holding := range holdings {
-		if holding.Amount.LessThan(decimal.Zero) || holding.Amount.Equal(decimal.Zero) {
-			return nil, ErrInvalidHoldingAmount{Asset: asset, Amount: holding.Amount}
+		if holding.LessThan(decimal.Zero) || holding.Equal(decimal.Zero) {
+			return nil, ErrInvalidHoldingAmount{Asset: asset, Amount: holding}
 		}
 		if string(asset) != strings.ToUpper(string(asset)) {
 			return nil, ErrInvalidAsset
@@ -55,21 +55,16 @@ func NewHoldings(holdings map[Asset]Holding) (Holdings, error) {
 }
 
 // NewAccount returns a new Account struct
-func NewAccount(holdings map[Asset]Holding, pricelist map[Asset]decimal.Decimal) Account {
+func NewAccount(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) Account {
 	totalValue := decimal.Zero
 	for asset, holding := range holdings {
-		totalValue = totalValue.Add(pricelist[asset].Mul(holding.Amount))
+		totalValue = totalValue.Add(pricelist[asset].Mul(holding))
 	}
 	return Account{holdings: holdings, pricelist: pricelist, value: totalValue}
 }
 
 // An Asset is a string type used to identify your assets.
 type Asset string
-
-// A Holding represents an Amount.
-type Holding struct {
-	Amount decimal.Decimal
-}
 
 // A Trade represents a buy or sell action of a certain amount
 type Trade struct {
@@ -106,7 +101,7 @@ func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade
 		amountRequired = a.value.Mul(percentage).Div(a.pricelist[asset])
 
 		if holding, ok := a.holdings[asset]; ok {
-			amountRequired = amountRequired.Sub(holding.Amount)
+			amountRequired = amountRequired.Sub(holding)
 		}
 
 		if amountRequired.IsNegative() {
