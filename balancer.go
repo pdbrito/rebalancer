@@ -5,7 +5,10 @@
 package balancer
 
 import (
+	"errors"
+	"fmt"
 	"github.com/shopspring/decimal"
+	"strings"
 )
 
 // An Account has holdings, a pricelist and a calculated value
@@ -13,6 +16,42 @@ type Account struct {
 	holdings  map[Asset]Holding
 	pricelist map[Asset]decimal.Decimal
 	value     decimal.Decimal
+}
+
+// Holdings are a map[Asset]Holding
+type Holdings map[Asset]Holding
+
+// ErrEmptyHoldings indicated an empty holdings was passed to NewHoldings
+var ErrEmptyHoldings = errors.New("holdings must not be empty")
+
+// ErrInvalidAsset indicates an Asset is not uppercase: "eth" vs "ETH"
+var ErrInvalidAsset = errors.New("holding assets must be uppercase")
+
+// ErrInvalidHoldingAmount indicates an invalid Holding.Amount of 0 or below
+type ErrInvalidHoldingAmount struct {
+	Asset  Asset
+	Amount decimal.Decimal
+}
+
+// Error formats the error message for ErrInvalidHoldingAmount
+func (e ErrInvalidHoldingAmount) Error() string {
+	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
+}
+
+// NewHoldings validates and returns a new Holdings struct
+func NewHoldings(holdings map[Asset]Holding) (Holdings, error) {
+	if len(holdings) == 0 {
+		return nil, ErrEmptyHoldings
+	}
+	for asset, holding := range holdings {
+		if holding.Amount.LessThan(decimal.Zero) || holding.Amount.Equal(decimal.Zero) {
+			return nil, ErrInvalidHoldingAmount{Asset: asset, Amount: holding.Amount}
+		}
+		if string(asset) != strings.ToUpper(string(asset)) {
+			return nil, ErrInvalidAsset
+		}
+	}
+	return holdings, nil
 }
 
 // NewAccount returns a new Account struct
@@ -40,8 +79,25 @@ type Trade struct {
 
 // Balance will return a map[Asset]Trade which will balance the passed in
 // holdings to match the passed in target index.
-func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) map[Asset]Trade {
-	//validate assumptions; only unique assets etc
+func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade, error) {
+	indexTotal := decimal.Zero
+	for asset, percentage := range targetIndex {
+		indexTotal = indexTotal.Add(percentage)
+		if _, ok := a.pricelist[asset]; !ok {
+			return nil, fmt.Errorf(
+				"targetIndex contains asset missing from the pricelist: %s",
+				asset,
+			)
+		}
+	}
+	if !indexTotal.Equal(decimal.NewFromFloat(1)) {
+		return nil, fmt.Errorf(
+			"targetIndex should sum to 1, got %v from %v",
+			indexTotal,
+			targetIndex,
+		)
+	}
+
 	trades := map[Asset]Trade{}
 
 	amountRequired := decimal.Zero
@@ -60,5 +116,5 @@ func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) map[Asset]Trade 
 		trades[asset] = Trade{"buy", amountRequired.Abs()}
 	}
 
-	return trades
+	return trades, nil
 }
