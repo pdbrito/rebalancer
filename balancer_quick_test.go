@@ -30,7 +30,7 @@ func (f fakeAccount) Generate(rand *rand.Rand, size int) reflect.Value {
 
 func TestBalancer_ResultingIndexEqualToTargetIndex(t *testing.T) {
 	assertion := func(f fakeAccount) bool {
-		Account := NewAccount(f.Holdings, f.Pricelist)
+		Account, _ := NewAccount(f.Holdings, f.Pricelist)
 		trades, err := Account.Balance(f.TargetIndex)
 
 		if err != nil {
@@ -48,7 +48,7 @@ func TestBalancer_ResultingIndexEqualToTargetIndex(t *testing.T) {
 		if e, ok := err.(*quick.CheckError); ok {
 			for _, value := range e.In {
 				f := value.(fakeAccount)
-				Account := NewAccount(f.Holdings, f.Pricelist)
+				Account, _ := NewAccount(f.Holdings, f.Pricelist)
 				trades, _ := Account.Balance(f.TargetIndex)
 				fmt.Printf("Holdings: %v\n", f.Holdings)
 				fmt.Printf("Target index: %v\n", f.TargetIndex)

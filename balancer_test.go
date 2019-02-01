@@ -9,7 +9,7 @@ import (
 )
 
 func TestAccount_Balance(t *testing.T) {
-	holdings := map[Asset]decimal.Decimal{
+	holdings := Holdings{
 		"ETH": decimal.NewFromFloat(20),
 		"BTC": decimal.NewFromFloat(0.5),
 	}
@@ -24,7 +24,7 @@ func TestAccount_Balance(t *testing.T) {
 		"BTC": decimal.NewFromFloat(5000),
 	}
 
-	Account := NewAccount(holdings, pricelist)
+	Account, _ := NewAccount(holdings, pricelist)
 
 	got, err := Account.Balance(targetIndex)
 
@@ -141,7 +141,7 @@ func TestAccount_Balance_IntoNewAssets(t *testing.T) {
 		"XLM":  decimal.NewFromFloat(0.2),
 	}
 
-	Account := NewAccount(holdings, pricelist)
+	Account, _ := NewAccount(holdings, pricelist)
 
 	got, err := Account.Balance(targetIndex)
 
@@ -194,7 +194,7 @@ func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
 		"BTC": decimal.NewFromFloat(2000),
 	}
 
-	Account := NewAccount(holdings, pricelist)
+	Account, _ := NewAccount(holdings, pricelist)
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -254,7 +254,7 @@ func ExampleAccount_Balance() {
 		"BTC": decimal.NewFromFloat(5000),
 	}
 
-	Account := NewAccount(holdings, pricelist)
+	Account, _ := NewAccount(holdings, pricelist)
 
 	requiredTrades, _ := Account.Balance(targetIndex)
 
@@ -283,7 +283,7 @@ func BenchmarkBalance(b *testing.B) {
 			"BTC": decimal.NewFromFloat(5000),
 		}
 
-		Account := NewAccount(holdings, pricelist)
+		Account, _ := NewAccount(holdings, pricelist)
 
 		_, _ = Account.Balance(targetIndex)
 	}

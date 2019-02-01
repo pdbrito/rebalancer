@@ -11,15 +11,15 @@ import (
 	"strings"
 )
 
+// Holdings are a map[Asset]Holding
+type Holdings map[Asset]decimal.Decimal
+
 // An Account has holdings, a pricelist and a calculated value
 type Account struct {
-	holdings  map[Asset]decimal.Decimal
+	holdings  Holdings
 	pricelist map[Asset]decimal.Decimal
 	value     decimal.Decimal
 }
-
-// Holdings are a map[Asset]Holding
-type Holdings map[Asset]decimal.Decimal
 
 // ErrEmptyHoldings indicated an empty holdings was passed to NewHoldings
 var ErrEmptyHoldings = errors.New("holdings must not be empty")
@@ -55,12 +55,16 @@ func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
 }
 
 // NewAccount returns a new Account struct
-func NewAccount(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) Account {
+func NewAccount(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) (Account, error) {
+	holdings, err := NewHoldings(holdings)
+	if err != nil {
+		return Account{}, err
+	}
 	totalValue := decimal.Zero
 	for asset, holding := range holdings {
 		totalValue = totalValue.Add(pricelist[asset].Mul(holding))
 	}
-	return Account{holdings: holdings, pricelist: pricelist, value: totalValue}
+	return Account{holdings: holdings, pricelist: pricelist, value: totalValue}, nil
 }
 
 // An Asset is a string type used to identify your assets.
