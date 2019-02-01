@@ -8,6 +8,77 @@ import (
 	"testing"
 )
 
+const unexpectedError string = "got an error but didn't want one"
+const missingError string = "wanted and error but didn't get one"
+
+func TestNewAccount(t *testing.T) {
+	t.Run("a new account can be created", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(20),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+	})
+	t.Run("a new account cannot be created with negative holdings", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(-5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with empty holdings", func(t *testing.T) {
+		holdings := Holdings{}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with invalid asset names", func(t *testing.T) {
+		holdings := Holdings{
+			"eth": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+}
+
 func TestAccount_Balance(t *testing.T) {
 	holdings := Holdings{
 		"ETH": decimal.NewFromFloat(20),
@@ -29,7 +100,7 @@ func TestAccount_Balance(t *testing.T) {
 	got, err := Account.Balance(targetIndex)
 
 	if err != nil {
-		t.Error("got an error but didn't want one")
+		t.Error(unexpectedError)
 	}
 
 	want := map[Asset]Trade{
@@ -46,7 +117,7 @@ func TestNewHoldings(t *testing.T) {
 	})
 
 	if err != nil {
-		t.Error("got an error but didn't want one")
+		t.Error(unexpectedError)
 	}
 
 	want := Holdings{"ETH": decimal.NewFromFloat(5)}
@@ -110,7 +181,7 @@ func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
 			_, err := NewHoldings(tt.holdings)
 
 			if err == nil {
-				t.Error("wanted an error but didn't get one")
+				t.Error(missingError)
 			}
 
 			if err != tt.err {
@@ -146,7 +217,7 @@ func TestAccount_Balance_IntoNewAssets(t *testing.T) {
 	got, err := Account.Balance(targetIndex)
 
 	if err != nil {
-		t.Error("got an error but didn't want one")
+		t.Error(unexpectedError)
 	}
 
 	want := map[Asset]Trade{
@@ -201,7 +272,7 @@ func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
 			_, err := Account.Balance(tt.targetIndex)
 
 			if err == nil {
-				t.Error("wanted an error but didn't get one")
+				t.Error(missingError)
 			}
 		})
 	}
