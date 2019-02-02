@@ -11,8 +11,11 @@ import (
 	"strings"
 )
 
-// Holdings are a map[Asset]Holding
+// Holdings is an account level store of assets
 type Holdings map[Asset]decimal.Decimal
+
+// Pricelist contains a map of Assets and their current price
+type Pricelist map[Asset]decimal.Decimal
 
 // An Account has holdings, a pricelist and a calculated value
 type Account struct {
@@ -21,37 +24,56 @@ type Account struct {
 	value     decimal.Decimal
 }
 
-// ErrEmptyHoldings indicated an empty holdings was passed to NewHoldings
+// ErrEmptyHoldings indicates an empty holdings was passed to NewHoldings
 var ErrEmptyHoldings = errors.New("holdings must not be empty")
+
+// ErrEmptyPricelist indicated an empty pricelist was passed to NewPricelist
+var ErrEmptyPricelist = errors.New("holdings must not be empty")
 
 // ErrInvalidAsset indicates an Asset is not uppercase: "eth" vs "ETH"
 var ErrInvalidAsset = errors.New("holding assets must be uppercase")
 
-// ErrInvalidHoldingAmount indicates an invalid Holding.Amount of 0 or below
-type ErrInvalidHoldingAmount struct {
+// ErrInvalidAssetAmount indicates an invalid asset amount of 0 or below
+type ErrInvalidAssetAmount struct {
 	Asset  Asset
 	Amount decimal.Decimal
 }
 
-// Error formats the error message for ErrInvalidHoldingAmount
-func (e ErrInvalidHoldingAmount) Error() string {
+// Error formats the error message for ErrInvalidAssetAmount
+func (e ErrInvalidAssetAmount) Error() string {
 	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
 }
 
-// NewHoldings validates and returns a new Holdings struct
+// NewHoldings validates and returns a new Holdings type
 func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
 	if len(holdings) == 0 {
 		return nil, ErrEmptyHoldings
 	}
 	for asset, holding := range holdings {
 		if holding.LessThan(decimal.Zero) || holding.Equal(decimal.Zero) {
-			return nil, ErrInvalidHoldingAmount{Asset: asset, Amount: holding}
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding}
 		}
 		if string(asset) != strings.ToUpper(string(asset)) {
 			return nil, ErrInvalidAsset
 		}
 	}
 	return holdings, nil
+}
+
+// NewPricelist validates and returns a new Pricelist type
+func NewPricelist(pricelist map[Asset]decimal.Decimal) (Pricelist, error) {
+	if len(pricelist) == 0 {
+		return nil, ErrEmptyPricelist
+	}
+	for asset, price := range pricelist {
+		if price.LessThan(decimal.Zero) || price.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: price}
+		}
+		if string(asset) != strings.ToUpper(string(asset)) {
+			return nil, ErrInvalidAsset
+		}
+	}
+	return pricelist, nil
 }
 
 // NewAccount returns a new Account struct
