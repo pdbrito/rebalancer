@@ -82,6 +82,10 @@ func NewAccount(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.
 	if err != nil {
 		return Account{}, err
 	}
+	pricelist, err = NewPricelist(pricelist)
+	if err != nil {
+		return Account{}, err
+	}
 	totalValue := decimal.Zero
 	for asset, holding := range holdings {
 		totalValue = totalValue.Add(pricelist[asset].Mul(holding))

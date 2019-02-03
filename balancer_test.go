@@ -30,7 +30,7 @@ func TestNewAccount(t *testing.T) {
 			t.Error(unexpectedError)
 		}
 	})
-	t.Run("a new account cannot be created with negative holdings", func(t *testing.T) {
+	t.Run("a new account cannot be created with negative holding values", func(t *testing.T) {
 		holdings := Holdings{
 			"ETH": decimal.NewFromFloat(-5),
 			"BTC": decimal.NewFromFloat(0.5),
@@ -39,6 +39,23 @@ func TestNewAccount(t *testing.T) {
 		pricelist := map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with negative pricelist values", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(-2500),
 		}
 
 		_, err := NewAccount(holdings, pricelist)
@@ -61,7 +78,21 @@ func TestNewAccount(t *testing.T) {
 			t.Error(missingError)
 		}
 	})
-	t.Run("a new account cannot be created with invalid asset names", func(t *testing.T) {
+	t.Run("a new account cannot be created with an empty pricelist", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with invalid asset names in its holdings", func(t *testing.T) {
 		holdings := Holdings{
 			"eth": decimal.NewFromFloat(5),
 			"BTC": decimal.NewFromFloat(0.5),
@@ -70,6 +101,23 @@ func TestNewAccount(t *testing.T) {
 		pricelist := map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with invalid asset names in its pricelist", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"btc": decimal.NewFromFloat(5000),
 		}
 
 		_, err := NewAccount(holdings, pricelist)
