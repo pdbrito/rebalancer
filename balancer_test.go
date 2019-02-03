@@ -210,6 +210,88 @@ func TestNewPricelist(t *testing.T) {
 	})
 }
 
+func TestNewIndex(t *testing.T) {
+	t.Run("an index cannot be empty", func(t *testing.T) {
+		_, err := NewIndex(map[Asset]decimal.Decimal{})
+
+		if err == nil {
+			t.Error(missingError)
+		}
+
+		want := ErrEmptyIndex
+
+		if err != want {
+			t.Error(wrongError)
+		}
+	})
+	t.Run("index asset keys must be uppercase", func(t *testing.T) {
+		_, err := NewIndex(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"btc": decimal.NewFromFloat(5000),
+		})
+
+		if err == nil {
+			t.Error(missingError)
+		}
+
+		want := ErrInvalidAsset
+
+		if err != want {
+			t.Error(wrongError)
+		}
+	})
+	t.Run("index entries must have a value above 0", func(t *testing.T) {
+		invalidAsset := Asset("BTC")
+		invalidAmount := decimal.NewFromFloat(-5)
+
+		_, err := NewIndex(map[Asset]decimal.Decimal{
+			"ETH":        decimal.NewFromFloat(200),
+			invalidAsset: invalidAmount,
+		})
+
+		want := ErrInvalidAssetAmount{Asset: invalidAsset, Amount: invalidAmount}
+
+		if err != want {
+			t.Errorf("got %v, want %v", err, want)
+		}
+	})
+	t.Run("index values must sum to 1", func(t *testing.T) {
+		_, err := NewIndex(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(0.2),
+			"BTC": decimal.NewFromFloat(0.2),
+		})
+
+		if err == nil {
+			t.Error(missingError)
+		}
+
+		want := ErrIndexSumIncorrect
+
+		if err != want {
+			t.Error(wrongError)
+		}
+	})
+	t.Run("a new index can be created", func(t *testing.T) {
+		got, err := NewIndex(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(0.5),
+			"BTC": decimal.NewFromFloat(0.5),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		want := Index{
+			"ETH": decimal.NewFromFloat(0.5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestAccount_Balance(t *testing.T) {
 	holdings := Holdings{
 		"ETH": decimal.NewFromFloat(20),

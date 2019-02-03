@@ -11,40 +11,30 @@ import (
 	"strings"
 )
 
-// Holdings is an account level store of assets
-type Holdings map[Asset]decimal.Decimal
+// An Asset is a string type used to identify your assets.
+type Asset string
 
-// Pricelist contains a map of Assets and their current price
-type Pricelist map[Asset]decimal.Decimal
+// ErrInvalidAsset indicates an Asset is not uppercase: "eth" vs "ETH".
+var ErrInvalidAsset = errors.New("assets must be uppercase")
 
-// An Account has holdings, a pricelist and a calculated value
-type Account struct {
-	holdings  Holdings
-	pricelist map[Asset]decimal.Decimal
-	value     decimal.Decimal
-}
-
-// ErrEmptyHoldings indicates an empty holdings was passed to NewHoldings
-var ErrEmptyHoldings = errors.New("holdings must not be empty")
-
-// ErrEmptyPricelist indicated an empty pricelist was passed to NewPricelist
-var ErrEmptyPricelist = errors.New("holdings must not be empty")
-
-// ErrInvalidAsset indicates an Asset is not uppercase: "eth" vs "ETH"
-var ErrInvalidAsset = errors.New("holding assets must be uppercase")
-
-// ErrInvalidAssetAmount indicates an invalid asset amount of 0 or below
+// ErrInvalidAssetAmount indicates an invalid asset amount of 0 or below.
 type ErrInvalidAssetAmount struct {
 	Asset  Asset
 	Amount decimal.Decimal
 }
 
-// Error formats the error message for ErrInvalidAssetAmount
+// Error formats the error message for ErrInvalidAssetAmount.
 func (e ErrInvalidAssetAmount) Error() string {
 	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
 }
 
-// NewHoldings validates and returns a new Holdings type
+// Holdings contains a map of Assets and their current quantity.
+type Holdings map[Asset]decimal.Decimal
+
+// ErrEmptyHoldings indicates an empty holdings was passed to NewHoldings.
+var ErrEmptyHoldings = errors.New("holdings must not be empty")
+
+// NewHoldings validates and returns a new Holdings type.
 func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
 	if len(holdings) == 0 {
 		return nil, ErrEmptyHoldings
@@ -60,7 +50,13 @@ func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
 	return holdings, nil
 }
 
-// NewPricelist validates and returns a new Pricelist type
+// Pricelist contains a map of Assets and their current price.
+type Pricelist map[Asset]decimal.Decimal
+
+// ErrEmptyPricelist indicates an empty pricelist was passed to NewPricelist.
+var ErrEmptyPricelist = errors.New("pricelist must not be empty")
+
+// NewPricelist validates and returns a new Pricelist type.
 func NewPricelist(pricelist map[Asset]decimal.Decimal) (Pricelist, error) {
 	if len(pricelist) == 0 {
 		return nil, ErrEmptyPricelist
@@ -76,7 +72,14 @@ func NewPricelist(pricelist map[Asset]decimal.Decimal) (Pricelist, error) {
 	return pricelist, nil
 }
 
-// NewAccount returns a new Account struct
+// An Account has holdings, a pricelist and a calculated total value.
+type Account struct {
+	holdings  Holdings
+	pricelist Pricelist
+	value     decimal.Decimal
+}
+
+// NewAccount validates holdings and pricelist then returns a new Account struct.
 func NewAccount(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) (Account, error) {
 	holdings, err := NewHoldings(holdings)
 	if err != nil {
@@ -93,10 +96,39 @@ func NewAccount(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.
 	return Account{holdings: holdings, pricelist: pricelist, value: totalValue}, nil
 }
 
-// An Asset is a string type used to identify your assets.
-type Asset string
+// Index contains a map of Assets and their values. Indexes values must
+// always sum to 1.
+type Index map[Asset]decimal.Decimal
 
-// A Trade represents a buy or sell action of a certain amount
+// ErrEmptyIndex indicates an empty index was passed to NewIndex.
+var ErrEmptyIndex = errors.New("index must not be empty")
+
+// ErrIndexSumIncorrect indicates that the sum of the values in an index is not
+// equal to 1.
+var ErrIndexSumIncorrect = errors.New("index values must sum to 1")
+
+// NewIndex validates and returns a new Index type whose values must sum to 1.
+func NewIndex(index map[Asset]decimal.Decimal) (Index, error) {
+	if len(index) == 0 {
+		return nil, ErrEmptyIndex
+	}
+	indexTotal := decimal.Zero
+	for asset, percentage := range index {
+		indexTotal = indexTotal.Add(percentage)
+		if percentage.LessThan(decimal.Zero) || percentage.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: percentage}
+		}
+		if string(asset) != strings.ToUpper(string(asset)) {
+			return nil, ErrInvalidAsset
+		}
+	}
+	if !indexTotal.Equal(decimal.NewFromFloat(1)) {
+		return nil, ErrIndexSumIncorrect
+	}
+	return index, nil
+}
+
+// A Trade represents a buy or sell action of a certain amount.
 type Trade struct {
 	Action string
 	Amount decimal.Decimal
