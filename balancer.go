@@ -28,28 +28,6 @@ func (e ErrInvalidAssetAmount) Error() string {
 	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
 }
 
-// Holdings contains a map of Assets and their current quantity.
-type Holdings map[Asset]decimal.Decimal
-
-// ErrEmptyHoldings indicates an empty holdings was passed to NewHoldings.
-var ErrEmptyHoldings = errors.New("holdings must not be empty")
-
-// NewHoldings validates and returns a new Holdings type.
-func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
-	if len(holdings) == 0 {
-		return nil, ErrEmptyHoldings
-	}
-	for asset, holding := range holdings {
-		if holding.LessThan(decimal.Zero) || holding.Equal(decimal.Zero) {
-			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding}
-		}
-		if string(asset) != strings.ToUpper(string(asset)) {
-			return nil, ErrInvalidAsset
-		}
-	}
-	return holdings, nil
-}
-
 // Pricelist contains a map of Assets and their current price.
 type Pricelist map[Asset]decimal.Decimal
 
@@ -70,6 +48,28 @@ func NewPricelist(pricelist map[Asset]decimal.Decimal) (Pricelist, error) {
 		}
 	}
 	return pricelist, nil
+}
+
+// Holdings contains a map of Assets and their current quantity.
+type Holdings map[Asset]decimal.Decimal
+
+// ErrEmptyHoldings indicates an empty holdings was passed to NewHoldings.
+var ErrEmptyHoldings = errors.New("holdings must not be empty")
+
+// NewHoldings validates and returns a new Holdings type.
+func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
+	if len(holdings) == 0 {
+		return nil, ErrEmptyHoldings
+	}
+	for asset, holding := range holdings {
+		if holding.LessThan(decimal.Zero) || holding.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding}
+		}
+		if string(asset) != strings.ToUpper(string(asset)) {
+			return nil, ErrInvalidAsset
+		}
+	}
+	return holdings, nil
 }
 
 // An Account has holdings, a pricelist and a calculated total value.
