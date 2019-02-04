@@ -11,41 +11,37 @@ import (
 	"strings"
 )
 
-// An Account has holdings, a pricelist and a calculated value
-type Account struct {
-	holdings  map[Asset]Holding
-	pricelist map[Asset]decimal.Decimal
-	value     decimal.Decimal
-}
+// An Asset is a string type used to identify your assets.
+type Asset string
 
-// Holdings are a map[Asset]Holding
-type Holdings map[Asset]Holding
+// ErrInvalidAsset indicates an Asset is not uppercase: "eth" vs "ETH".
+var ErrInvalidAsset = errors.New("assets must be uppercase")
 
-// ErrEmptyHoldings indicated an empty holdings was passed to NewHoldings
-var ErrEmptyHoldings = errors.New("holdings must not be empty")
-
-// ErrInvalidAsset indicates an Asset is not uppercase: "eth" vs "ETH"
-var ErrInvalidAsset = errors.New("holding assets must be uppercase")
-
-// ErrInvalidHoldingAmount indicates an invalid Holding.Amount of 0 or below
-type ErrInvalidHoldingAmount struct {
+// ErrInvalidAssetAmount indicates an invalid asset amount of 0 or below.
+type ErrInvalidAssetAmount struct {
 	Asset  Asset
 	Amount decimal.Decimal
 }
 
-// Error formats the error message for ErrInvalidHoldingAmount
-func (e ErrInvalidHoldingAmount) Error() string {
+// Error formats the error message for ErrInvalidAssetAmount.
+func (e ErrInvalidAssetAmount) Error() string {
 	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
 }
 
-// NewHoldings validates and returns a new Holdings struct
-func NewHoldings(holdings map[Asset]Holding) (Holdings, error) {
+// Holdings contains a map of Assets and their current quantity.
+type Holdings map[Asset]decimal.Decimal
+
+// ErrEmptyHoldings indicates an empty holdings was passed to NewHoldings.
+var ErrEmptyHoldings = errors.New("holdings must not be empty")
+
+// NewHoldings validates and returns a new Holdings type.
+func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
 	if len(holdings) == 0 {
 		return nil, ErrEmptyHoldings
 	}
 	for asset, holding := range holdings {
-		if holding.Amount.LessThan(decimal.Zero) || holding.Amount.Equal(decimal.Zero) {
-			return nil, ErrInvalidHoldingAmount{Asset: asset, Amount: holding.Amount}
+		if holding.LessThan(decimal.Zero) || holding.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding}
 		}
 		if string(asset) != strings.ToUpper(string(asset)) {
 			return nil, ErrInvalidAsset
@@ -54,24 +50,85 @@ func NewHoldings(holdings map[Asset]Holding) (Holdings, error) {
 	return holdings, nil
 }
 
-// NewAccount returns a new Account struct
-func NewAccount(holdings map[Asset]Holding, pricelist map[Asset]decimal.Decimal) Account {
+// Pricelist contains a map of Assets and their current price.
+type Pricelist map[Asset]decimal.Decimal
+
+// ErrEmptyPricelist indicates an empty pricelist was passed to NewPricelist.
+var ErrEmptyPricelist = errors.New("pricelist must not be empty")
+
+// NewPricelist validates and returns a new Pricelist type.
+func NewPricelist(pricelist map[Asset]decimal.Decimal) (Pricelist, error) {
+	if len(pricelist) == 0 {
+		return nil, ErrEmptyPricelist
+	}
+	for asset, price := range pricelist {
+		if price.LessThan(decimal.Zero) || price.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: price}
+		}
+		if string(asset) != strings.ToUpper(string(asset)) {
+			return nil, ErrInvalidAsset
+		}
+	}
+	return pricelist, nil
+}
+
+// An Account has holdings, a pricelist and a calculated total value.
+type Account struct {
+	holdings  Holdings
+	pricelist Pricelist
+	value     decimal.Decimal
+}
+
+// NewAccount validates holdings and pricelist then returns a new Account struct.
+func NewAccount(holdings map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) (Account, error) {
+	holdings, err := NewHoldings(holdings)
+	if err != nil {
+		return Account{}, err
+	}
+	pricelist, err = NewPricelist(pricelist)
+	if err != nil {
+		return Account{}, err
+	}
 	totalValue := decimal.Zero
 	for asset, holding := range holdings {
-		totalValue = totalValue.Add(pricelist[asset].Mul(holding.Amount))
+		totalValue = totalValue.Add(pricelist[asset].Mul(holding))
 	}
-	return Account{holdings: holdings, pricelist: pricelist, value: totalValue}
+	return Account{holdings: holdings, pricelist: pricelist, value: totalValue}, nil
 }
 
-// An Asset is a string type used to identify your assets.
-type Asset string
+// Index contains a map of Assets and their values. Indexes values must
+// always sum to 1.
+type Index map[Asset]decimal.Decimal
 
-// A Holding represents an Amount.
-type Holding struct {
-	Amount decimal.Decimal
+// ErrEmptyIndex indicates an empty index was passed to NewIndex.
+var ErrEmptyIndex = errors.New("index must not be empty")
+
+// ErrIndexSumIncorrect indicates that the sum of the values in an index is not
+// equal to 1.
+var ErrIndexSumIncorrect = errors.New("index values must sum to 1")
+
+// NewIndex validates and returns a new Index type whose values must sum to 1.
+func NewIndex(index map[Asset]decimal.Decimal) (Index, error) {
+	if len(index) == 0 {
+		return nil, ErrEmptyIndex
+	}
+	indexTotal := decimal.Zero
+	for asset, percentage := range index {
+		indexTotal = indexTotal.Add(percentage)
+		if percentage.LessThan(decimal.Zero) || percentage.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: percentage}
+		}
+		if string(asset) != strings.ToUpper(string(asset)) {
+			return nil, ErrInvalidAsset
+		}
+	}
+	if !indexTotal.Equal(decimal.NewFromFloat(1)) {
+		return nil, ErrIndexSumIncorrect
+	}
+	return index, nil
 }
 
-// A Trade represents a buy or sell action of a certain amount
+// A Trade represents a buy or sell action of a certain amount.
 type Trade struct {
 	Action string
 	Amount decimal.Decimal
@@ -106,7 +163,7 @@ func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade
 		amountRequired = a.value.Mul(percentage).Div(a.pricelist[asset])
 
 		if holding, ok := a.holdings[asset]; ok {
-			amountRequired = amountRequired.Sub(holding.Amount)
+			amountRequired = amountRequired.Sub(holding)
 		}
 
 		if amountRequired.IsNegative() {

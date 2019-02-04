@@ -8,14 +8,294 @@ import (
 	"testing"
 )
 
+const unexpectedError string = "got an error but didn't want one"
+const missingError string = "wanted an error but didn't get one"
+const wrongError string = "got an error but expected a different one"
+
+func TestNewAccount(t *testing.T) {
+	t.Run("a new account can be created", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(20),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+	})
+	t.Run("a new account cannot be created with negative holding values", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(-5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with negative pricelist values", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(-2500),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with empty holdings", func(t *testing.T) {
+		holdings := Holdings{}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with an empty pricelist", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with invalid asset names in its holdings", func(t *testing.T) {
+		holdings := Holdings{
+			"eth": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+	t.Run("a new account cannot be created with invalid asset names in its pricelist", func(t *testing.T) {
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"btc": decimal.NewFromFloat(5000),
+		}
+
+		_, err := NewAccount(holdings, pricelist)
+
+		if err == nil {
+			t.Error(missingError)
+		}
+	})
+}
+
+func TestNewHoldings(t *testing.T) {
+	got, err := NewHoldings(map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(5),
+	})
+
+	if err != nil {
+		t.Error(unexpectedError)
+	}
+
+	want := Holdings{"ETH": decimal.NewFromFloat(5)}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v want %v", got, want)
+	}
+}
+
+func TestNewPricelist(t *testing.T) {
+	t.Run("a new pricelist can be created", func(t *testing.T) {
+		got, err := NewPricelist(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		want := Pricelist{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
+	t.Run("an empty pricelist cannot be created", func(t *testing.T) {
+		_, err := NewPricelist(map[Asset]decimal.Decimal{})
+
+		if err == nil {
+			t.Error(missingError)
+		}
+
+		want := ErrEmptyPricelist
+
+		if err != want {
+			t.Error(wrongError)
+		}
+	})
+	t.Run("pricelist asset keys must be uppercase", func(t *testing.T) {
+		_, err := NewPricelist(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"btc": decimal.NewFromFloat(5000),
+		})
+
+		if err == nil {
+			t.Error(missingError)
+		}
+
+		want := ErrInvalidAsset
+
+		if err != want {
+			t.Error(wrongError)
+		}
+	})
+	t.Run("pricelist entries must have a value above 0", func(t *testing.T) {
+		invalidAsset := Asset("BTC")
+		invalidAmount := decimal.NewFromFloat(-5)
+
+		_, err := NewPricelist(map[Asset]decimal.Decimal{
+			"ETH":        decimal.NewFromFloat(200),
+			invalidAsset: invalidAmount,
+		})
+
+		want := ErrInvalidAssetAmount{Asset: invalidAsset, Amount: invalidAmount}
+
+		if err != want {
+			t.Errorf("got %v, want %v", err, want)
+		}
+	})
+}
+
+func TestNewIndex(t *testing.T) {
+	t.Run("an index cannot be empty", func(t *testing.T) {
+		_, err := NewIndex(map[Asset]decimal.Decimal{})
+
+		if err == nil {
+			t.Error(missingError)
+		}
+
+		want := ErrEmptyIndex
+
+		if err != want {
+			t.Error(wrongError)
+		}
+	})
+	t.Run("index asset keys must be uppercase", func(t *testing.T) {
+		_, err := NewIndex(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"btc": decimal.NewFromFloat(5000),
+		})
+
+		if err == nil {
+			t.Error(missingError)
+		}
+
+		want := ErrInvalidAsset
+
+		if err != want {
+			t.Error(wrongError)
+		}
+	})
+	t.Run("index entries must have a value above 0", func(t *testing.T) {
+		invalidAsset := Asset("BTC")
+		invalidAmount := decimal.NewFromFloat(-5)
+
+		_, err := NewIndex(map[Asset]decimal.Decimal{
+			"ETH":        decimal.NewFromFloat(200),
+			invalidAsset: invalidAmount,
+		})
+
+		want := ErrInvalidAssetAmount{Asset: invalidAsset, Amount: invalidAmount}
+
+		if err != want {
+			t.Errorf("got %v, want %v", err, want)
+		}
+	})
+	t.Run("index values must sum to 1", func(t *testing.T) {
+		_, err := NewIndex(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(0.2),
+			"BTC": decimal.NewFromFloat(0.2),
+		})
+
+		if err == nil {
+			t.Error(missingError)
+		}
+
+		want := ErrIndexSumIncorrect
+
+		if err != want {
+			t.Error(wrongError)
+		}
+	})
+	t.Run("a new index can be created", func(t *testing.T) {
+		got, err := NewIndex(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(0.5),
+			"BTC": decimal.NewFromFloat(0.5),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		want := Index{
+			"ETH": decimal.NewFromFloat(0.5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestAccount_Balance(t *testing.T) {
-	holdings := map[Asset]Holding{
-		"ETH": {
-			Amount: decimal.NewFromFloat(20),
-		},
-		"BTC": {
-			Amount: decimal.NewFromFloat(0.5),
-		},
+	holdings := Holdings{
+		"ETH": decimal.NewFromFloat(20),
+		"BTC": decimal.NewFromFloat(0.5),
 	}
 
 	targetIndex := map[Asset]decimal.Decimal{
@@ -28,12 +308,12 @@ func TestAccount_Balance(t *testing.T) {
 		"BTC": decimal.NewFromFloat(5000),
 	}
 
-	Account := NewAccount(holdings, pricelist)
+	Account, _ := NewAccount(holdings, pricelist)
 
 	got, err := Account.Balance(targetIndex)
 
 	if err != nil {
-		t.Error("got an error but didn't want one")
+		t.Error(unexpectedError)
 	}
 
 	want := map[Asset]Trade{
@@ -44,27 +324,11 @@ func TestAccount_Balance(t *testing.T) {
 	assertSameTrades(t, got, want)
 }
 
-func TestNewHoldings(t *testing.T) {
-	got, err := NewHoldings(map[Asset]Holding{
-		"ETH": {Amount: decimal.NewFromFloat(5)},
-	})
-
-	if err != nil {
-		t.Error("got an error but didn't want one")
-	}
-
-	want := Holdings{"ETH": {Amount: decimal.NewFromFloat(5)}}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v want %v", got, want)
-	}
-}
-
 func TestErrInvalidAssetAmount_Error(t *testing.T) {
 	asset := Asset("ETH")
 	amount := decimal.NewFromFloat(-5)
 
-	err := ErrInvalidHoldingAmount{Asset: asset, Amount: amount}
+	err := ErrInvalidAssetAmount{Asset: asset, Amount: amount}
 
 	want := "ETH needs positive amount, not -5"
 	got := err.Error()
@@ -78,11 +342,11 @@ func TestNewHoldings_ErrorsOnNonPositiveHoldingAmount(t *testing.T) {
 	asset := Asset("ETH")
 	amount := decimal.NewFromFloat(-5)
 
-	_, err := NewHoldings(map[Asset]Holding{
-		asset: {Amount: amount},
+	_, err := NewHoldings(map[Asset]decimal.Decimal{
+		asset: amount,
 	})
 
-	want := ErrInvalidHoldingAmount{Asset: asset, Amount: amount}
+	want := ErrInvalidAssetAmount{Asset: asset, Amount: amount}
 
 	if err != want {
 		t.Errorf("got %v, want %v", err, want)
@@ -92,20 +356,18 @@ func TestNewHoldings_ErrorsOnNonPositiveHoldingAmount(t *testing.T) {
 func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
 	testCases := []struct {
 		name     string
-		holdings map[Asset]Holding
+		holdings map[Asset]decimal.Decimal
 		err      error
 	}{
 		{
 			name:     "holdings must not be empty",
-			holdings: map[Asset]Holding{},
+			holdings: map[Asset]decimal.Decimal{},
 			err:      ErrEmptyHoldings,
 		},
 		{
 			name: "holding assets should be uppercase and unique",
-			holdings: map[Asset]Holding{
-				"eth": {
-					Amount: decimal.NewFromFloat(5),
-				},
+			holdings: map[Asset]decimal.Decimal{
+				"eth": decimal.NewFromFloat(5),
 			},
 			err: ErrInvalidAsset,
 		},
@@ -116,7 +378,7 @@ func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
 			_, err := NewHoldings(tt.holdings)
 
 			if err == nil {
-				t.Error("wanted an error but didn't get one")
+				t.Error(missingError)
 			}
 
 			if err != tt.err {
@@ -127,10 +389,8 @@ func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
 }
 
 func TestAccount_Balance_IntoNewAssets(t *testing.T) {
-	holdings := map[Asset]Holding{
-		"ETH": {
-			Amount: decimal.NewFromFloat(42),
-		},
+	holdings := map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(42),
 	}
 
 	targetIndex := map[Asset]decimal.Decimal{
@@ -149,12 +409,12 @@ func TestAccount_Balance_IntoNewAssets(t *testing.T) {
 		"XLM":  decimal.NewFromFloat(0.2),
 	}
 
-	Account := NewAccount(holdings, pricelist)
+	Account, _ := NewAccount(holdings, pricelist)
 
 	got, err := Account.Balance(targetIndex)
 
 	if err != nil {
-		t.Error("got an error but didn't want one")
+		t.Error(unexpectedError)
 	}
 
 	want := map[Asset]Trade{
@@ -193,10 +453,8 @@ func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
 		},
 	}
 
-	holdings := map[Asset]Holding{
-		"ETH": {
-			Amount: decimal.NewFromFloat(42),
-		},
+	holdings := map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(42),
 	}
 
 	pricelist := map[Asset]decimal.Decimal{
@@ -204,14 +462,14 @@ func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
 		"BTC": decimal.NewFromFloat(2000),
 	}
 
-	Account := NewAccount(holdings, pricelist)
+	Account, _ := NewAccount(holdings, pricelist)
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := Account.Balance(tt.targetIndex)
 
 			if err == nil {
-				t.Error("wanted an error but didn't get one")
+				t.Error(missingError)
 			}
 		})
 	}
@@ -249,13 +507,9 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 }
 
 func ExampleAccount_Balance() {
-	holdings := map[Asset]Holding{
-		"ETH": {
-			Amount: decimal.NewFromFloat(20),
-		},
-		"BTC": {
-			Amount: decimal.NewFromFloat(0.5),
-		},
+	holdings := map[Asset]decimal.Decimal{
+		"ETH": decimal.NewFromFloat(20),
+		"BTC": decimal.NewFromFloat(0.5),
 	}
 
 	targetIndex := map[Asset]decimal.Decimal{
@@ -268,7 +522,7 @@ func ExampleAccount_Balance() {
 		"BTC": decimal.NewFromFloat(5000),
 	}
 
-	Account := NewAccount(holdings, pricelist)
+	Account, _ := NewAccount(holdings, pricelist)
 
 	requiredTrades, _ := Account.Balance(targetIndex)
 
@@ -283,13 +537,9 @@ func ExampleAccount_Balance() {
 
 func BenchmarkBalance(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		holdings := map[Asset]Holding{
-			"ETH": {
-				Amount: decimal.NewFromFloat(20),
-			},
-			"BTC": {
-				Amount: decimal.NewFromFloat(0.5),
-			},
+		holdings := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(20),
+			"BTC": decimal.NewFromFloat(0.5),
 		}
 		targetIndex := map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(0.3),
@@ -301,7 +551,7 @@ func BenchmarkBalance(b *testing.B) {
 			"BTC": decimal.NewFromFloat(5000),
 		}
 
-		Account := NewAccount(holdings, pricelist)
+		Account, _ := NewAccount(holdings, pricelist)
 
 		_, _ = Account.Balance(targetIndex)
 	}
