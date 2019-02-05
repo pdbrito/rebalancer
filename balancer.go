@@ -95,6 +95,9 @@ type Account struct {
 
 // NewAccount validates holdings and then returns a new Account struct.
 func NewAccount(holdings map[Asset]decimal.Decimal) (Account, error) {
+	if len(globalPricelist) == 0 {
+		return Account{}, ErrEmptyPricelist
+	}
 	holdings, err := NewHoldings(holdings)
 	if err != nil {
 		return Account{}, err

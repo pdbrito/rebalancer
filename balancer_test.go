@@ -189,21 +189,40 @@ func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
 }
 
 func TestNewAccount(t *testing.T) {
+	t.Run("a new account cannot be created if the global pricelist is empty", func(t *testing.T) {
+		ClearGlobalPricelist()
+
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(5),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		_, err := NewAccount(holdings)
+
+		if err != ErrEmptyPricelist {
+			t.Error(wrongError)
+		}
+	})
 	t.Run("a new account cannot be created with negative holding values", func(t *testing.T) {
 		_ = SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
 		})
 
+		invalidAsset := Asset("ETH")
+		invalidAmount := decimal.NewFromFloat(-5)
+
 		holdings := Holdings{
-			"ETH": decimal.NewFromFloat(-5),
-			"BTC": decimal.NewFromFloat(0.5),
+			invalidAsset: invalidAmount,
+			"BTC":        decimal.NewFromFloat(0.5),
 		}
 
 		_, err := NewAccount(holdings)
 
-		if err == nil {
-			t.Error(missingError)
+		want := ErrInvalidAssetAmount{Asset: invalidAsset, Amount: invalidAmount}
+
+		if err != want {
+			t.Error(wrongError)
 		}
 	})
 	t.Run("a new account cannot be created with empty holdings", func(t *testing.T) {
