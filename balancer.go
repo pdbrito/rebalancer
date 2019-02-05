@@ -64,9 +64,9 @@ func ClearGlobalPricelist() {
 	globalPricelist = Pricelist{}
 }
 
-// ErrAssetMissingFromPricelist indicates an entry in the holdings does not have
-// a matching entry in the global pricelist.
-var ErrAssetMissingFromPricelist = errors.New("holding asset missing from pricelist")
+// ErrAssetMissingFromPricelist indicates an asset without a matching entry in
+// the global pricelist.
+var ErrAssetMissingFromPricelist = errors.New("asset missing from global pricelist")
 
 // Holdings contains a map of Assets and their current quantity.
 type Holdings map[Asset]decimal.Decimal
@@ -133,14 +133,16 @@ func NewIndex(index map[Asset]decimal.Decimal) (Index, error) {
 	}
 	indexTotal := decimal.Zero
 	for asset, percentage := range index {
-		indexTotal = indexTotal.Add(percentage)
-		if percentage.LessThan(decimal.Zero) || percentage.Equal(decimal.Zero) {
-			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: percentage}
-		}
 		if string(asset) != strings.ToUpper(string(asset)) {
 			return nil, ErrInvalidAsset
 		}
-		//if asset is not in pricelist, error
+		if _, ok := globalPricelist[asset]; !ok {
+			return nil, ErrAssetMissingFromPricelist
+		}
+		if percentage.LessThan(decimal.Zero) || percentage.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: percentage}
+		}
+		indexTotal = indexTotal.Add(percentage)
 	}
 	if !indexTotal.Equal(decimal.NewFromFloat(1)) {
 		return nil, ErrIndexSumIncorrect
