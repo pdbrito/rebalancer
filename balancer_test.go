@@ -27,7 +27,7 @@ func TestErrInvalidAssetAmount_Error(t *testing.T) {
 }
 
 func TestSetPricelist(t *testing.T) {
-	t.Run("a new pricelist can be set and retrieved", func(t *testing.T) {
+	t.Run("a new pricelist can be set", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -75,6 +75,49 @@ func TestSetPricelist(t *testing.T) {
 
 		if err != want {
 			t.Errorf("got %v, want %v", err, want)
+		}
+	})
+}
+
+func TestGlobalPricelist(t *testing.T) {
+	t.Run("it returns the current value of the global pricelist", func(t *testing.T) {
+		pricelist := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(222),
+			"BTC": decimal.NewFromFloat(5555),
+		}
+
+		err := SetPricelist(pricelist)
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		got := GlobalPricelist()
+		want := Pricelist(pricelist)
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	})
+}
+
+func TestClearGlobalPricelist(t *testing.T) {
+	t.Run("it clears the value of the global pricelist", func(t *testing.T) {
+		err := SetPricelist(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(5),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		ClearGlobalPricelist()
+
+		got := GlobalPricelist()
+		want := Pricelist{}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v, want %v", got, want)
 		}
 	})
 }
