@@ -28,7 +28,7 @@ func (e ErrInvalidAssetAmount) Error() string {
 	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
 }
 
-// globalPricelist contains the current pricelist used for all calculations
+// globalPricelist contains the current pricelist used for all calculations.
 var globalPricelist = Pricelist{}
 
 // Pricelist contains a map of Assets and their current price.
@@ -52,6 +52,16 @@ func SetPricelist(pricelist map[Asset]decimal.Decimal) error {
 	}
 	globalPricelist = pricelist
 	return nil
+}
+
+// GlobalPricelist returns the current value of the global pricelist.
+func GlobalPricelist() Pricelist {
+	return globalPricelist
+}
+
+// ClearGlobalPricelist clears the global pricelist.
+func ClearGlobalPricelist() {
+	globalPricelist = Pricelist{}
 }
 
 // Holdings contains a map of Assets and their current quantity.
