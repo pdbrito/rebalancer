@@ -373,75 +373,92 @@ func TestNewIndex(t *testing.T) {
 }
 
 func TestAccount_Balance(t *testing.T) {
-	_ = SetPricelist(map[Asset]decimal.Decimal{
-		"ETH": decimal.NewFromFloat(200),
-		"BTC": decimal.NewFromFloat(5000),
+	t.Run("it can balance an account", func(t *testing.T) {
+		err := SetPricelist(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		holdings := Holdings{
+			"ETH": decimal.NewFromFloat(20),
+			"BTC": decimal.NewFromFloat(0.5),
+		}
+
+		targetIndex := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(0.3),
+			"BTC": decimal.NewFromFloat(0.7),
+		}
+
+		Account, err := NewAccount(holdings)
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		got, err := Account.Balance(targetIndex)
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		want := map[Asset]Trade{
+			"ETH": {Action: "sell", Amount: decimal.NewFromFloat(10.25)},
+			"BTC": {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
+		}
+
+		assertSameTrades(t, got, want)
 	})
+	t.Run("it can balance existing holdings into new holdings", func(t *testing.T) {
+		err := SetPricelist(map[Asset]decimal.Decimal{
+			"ETH":  decimal.NewFromFloat(200),
+			"BTC":  decimal.NewFromFloat(2000),
+			"IOTA": decimal.NewFromFloat(0.3),
+			"BAT":  decimal.NewFromFloat(0.12),
+			"XLM":  decimal.NewFromFloat(0.2),
+		})
 
-	holdings := Holdings{
-		"ETH": decimal.NewFromFloat(20),
-		"BTC": decimal.NewFromFloat(0.5),
-	}
+		if err != nil {
+			t.Error(unexpectedError)
+		}
 
-	targetIndex := map[Asset]decimal.Decimal{
-		"ETH": decimal.NewFromFloat(0.3),
-		"BTC": decimal.NewFromFloat(0.7),
-	}
+		holdings := map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(42),
+		}
 
-	Account, _ := NewAccount(holdings)
+		targetIndex := map[Asset]decimal.Decimal{
+			"ETH":  decimal.NewFromFloat(0.2),
+			"BTC":  decimal.NewFromFloat(0.2),
+			"IOTA": decimal.NewFromFloat(0.2),
+			"BAT":  decimal.NewFromFloat(0.2),
+			"XLM":  decimal.NewFromFloat(0.2),
+		}
 
-	got, err := Account.Balance(targetIndex)
+		Account, err := NewAccount(holdings)
 
-	if err != nil {
-		t.Error(unexpectedError)
-	}
+		if err != nil {
+			t.Error(unexpectedError)
+		}
 
-	want := map[Asset]Trade{
-		"ETH": {Action: "sell", Amount: decimal.NewFromFloat(10.25)},
-		"BTC": {Action: "buy", Amount: decimal.NewFromFloat(0.41)},
-	}
+		got, err := Account.Balance(targetIndex)
 
-	assertSameTrades(t, got, want)
-}
+		if err != nil {
+			t.Error(unexpectedError)
+		}
 
-func TestAccount_Balance_IntoNewAssets(t *testing.T) {
-	_ = SetPricelist(map[Asset]decimal.Decimal{
-		"ETH":  decimal.NewFromFloat(200),
-		"BTC":  decimal.NewFromFloat(2000),
-		"IOTA": decimal.NewFromFloat(0.3),
-		"BAT":  decimal.NewFromFloat(0.12),
-		"XLM":  decimal.NewFromFloat(0.2),
+		want := map[Asset]Trade{
+			"ETH":  {Action: "sell", Amount: decimal.NewFromFloat(33.6)},
+			"BTC":  {Action: "buy", Amount: decimal.NewFromFloat(0.84)},
+			"IOTA": {Action: "buy", Amount: decimal.NewFromFloat(5600)},
+			"BAT":  {Action: "buy", Amount: decimal.NewFromFloat(14000)},
+			"XLM":  {Action: "buy", Amount: decimal.NewFromFloat(8400)},
+		}
+
+		assertSameTrades(t, got, want)
 	})
-
-	holdings := map[Asset]decimal.Decimal{
-		"ETH": decimal.NewFromFloat(42),
-	}
-
-	targetIndex := map[Asset]decimal.Decimal{
-		"ETH":  decimal.NewFromFloat(0.2),
-		"BTC":  decimal.NewFromFloat(0.2),
-		"IOTA": decimal.NewFromFloat(0.2),
-		"BAT":  decimal.NewFromFloat(0.2),
-		"XLM":  decimal.NewFromFloat(0.2),
-	}
-
-	Account, _ := NewAccount(holdings)
-
-	got, err := Account.Balance(targetIndex)
-
-	if err != nil {
-		t.Error(unexpectedError)
-	}
-
-	want := map[Asset]Trade{
-		"ETH":  {Action: "sell", Amount: decimal.NewFromFloat(33.6)},
-		"BTC":  {Action: "buy", Amount: decimal.NewFromFloat(0.84)},
-		"IOTA": {Action: "buy", Amount: decimal.NewFromFloat(5600)},
-		"BAT":  {Action: "buy", Amount: decimal.NewFromFloat(14000)},
-		"XLM":  {Action: "buy", Amount: decimal.NewFromFloat(8400)},
-	}
-
-	assertSameTrades(t, got, want)
 }
 
 func TestAccount_Balance_ErrorsWhenTargetIndexIsInvalid(t *testing.T) {
