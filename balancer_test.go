@@ -123,14 +123,14 @@ func TestClearGlobalPricelist(t *testing.T) {
 }
 
 func TestNewHoldings(t *testing.T) {
-	t.Run("holdings cannot be created with an empty map", func(t *testing.T) {
+	t.Run("holdings cannot contain an empty map", func(t *testing.T) {
 		_, err := NewHoldings(map[Asset]decimal.Decimal{})
 
 		if err != ErrEmptyHoldings {
 			t.Errorf("got %v want %v", err, ErrEmptyHoldings)
 		}
 	})
-	t.Run("holdings cannot be created with invalid asset keys", func(t *testing.T) {
+	t.Run("holdings cannot contain invalid asset keys", func(t *testing.T) {
 		_, err := NewHoldings(map[Asset]decimal.Decimal{
 			"eth": decimal.NewFromFloat(5),
 		})
@@ -139,7 +139,7 @@ func TestNewHoldings(t *testing.T) {
 			t.Errorf("got %v want %v", err, ErrInvalidAsset)
 		}
 	})
-	t.Run("holdings cannot be created with assets missing from the global pricelist", func(t *testing.T) {
+	t.Run("holdings cannot contain assets missing from the global pricelist", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 		})
@@ -155,9 +155,8 @@ func TestNewHoldings(t *testing.T) {
 		if err != ErrAssetMissingFromPricelist {
 			t.Errorf("got %v, want %v", err, ErrAssetMissingFromPricelist)
 		}
-
 	})
-	t.Run("holdings cannot be created with asset values of zero or less", func(t *testing.T) {
+	t.Run("holdings cannot contain values of zero or less", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 		})
@@ -197,7 +196,7 @@ func TestNewHoldings(t *testing.T) {
 }
 
 func TestNewAccount(t *testing.T) {
-	t.Run("a new account cannot be created if the global pricelist is empty", func(t *testing.T) {
+	t.Run("account cannot be created if the global pricelist is empty", func(t *testing.T) {
 		ClearGlobalPricelist()
 
 		holdings := Holdings{
@@ -211,7 +210,7 @@ func TestNewAccount(t *testing.T) {
 			t.Error(wrongError)
 		}
 	})
-	t.Run("a new account cannot be created with invalid asset values in its holdings", func(t *testing.T) {
+	t.Run("account cannot contain invalid asset keys in its holdings", func(t *testing.T) {
 		_ = SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -233,7 +232,7 @@ func TestNewAccount(t *testing.T) {
 			t.Error(wrongError)
 		}
 	})
-	t.Run("a new account cannot be created with empty holdings", func(t *testing.T) {
+	t.Run("account cannot contain empty holdings", func(t *testing.T) {
 		_ = SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -247,7 +246,7 @@ func TestNewAccount(t *testing.T) {
 			t.Error(missingError)
 		}
 	})
-	t.Run("a new account cannot be created with invalid asset keys in its holdings", func(t *testing.T) {
+	t.Run("account cannot contain invalid asset keys in its holdings", func(t *testing.T) {
 		_ = SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -284,40 +283,54 @@ func TestNewAccount(t *testing.T) {
 }
 
 func TestNewIndex(t *testing.T) {
-	t.Run("an index cannot be empty", func(t *testing.T) {
+	t.Run("index cannot contain an empty map", func(t *testing.T) {
 		_, err := NewIndex(map[Asset]decimal.Decimal{})
 
-		if err == nil {
-			t.Error(missingError)
-		}
-
-		want := ErrEmptyIndex
-
-		if err != want {
+		if err != ErrEmptyIndex {
 			t.Error(wrongError)
 		}
 	})
-	t.Run("index asset keys must be uppercase", func(t *testing.T) {
+	t.Run("index cannot contain invalid asset keys", func(t *testing.T) {
 		_, err := NewIndex(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"btc": decimal.NewFromFloat(5000),
 		})
 
-		if err == nil {
-			t.Error(missingError)
-		}
-
-		want := ErrInvalidAsset
-
-		if err != want {
+		if err != ErrInvalidAsset {
 			t.Error(wrongError)
 		}
 	})
-	t.Run("index entries must have a value above 0", func(t *testing.T) {
+	t.Run("index cannot contain assets missing from the global pricelist", func(t *testing.T) {
+		err := SetPricelist(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		_, err = NewIndex(map[Asset]decimal.Decimal{
+			"BTC": decimal.NewFromFloat(1),
+		})
+
+		if err != ErrAssetMissingFromPricelist {
+			t.Errorf("got %v, want %v", err, ErrAssetMissingFromPricelist)
+		}
+	})
+	t.Run("index cannot contain values of zero or less", func(t *testing.T) {
+		err := SetPricelist(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+			"BTC": decimal.NewFromFloat(5000),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
 		invalidAsset := Asset("BTC")
 		invalidAmount := decimal.NewFromFloat(-5)
 
-		_, err := NewIndex(map[Asset]decimal.Decimal{
+		_, err = NewIndex(map[Asset]decimal.Decimal{
 			"ETH":        decimal.NewFromFloat(200),
 			invalidAsset: invalidAmount,
 		})
@@ -334,13 +347,7 @@ func TestNewIndex(t *testing.T) {
 			"BTC": decimal.NewFromFloat(0.2),
 		})
 
-		if err == nil {
-			t.Error(missingError)
-		}
-
-		want := ErrIndexSumIncorrect
-
-		if err != want {
+		if err != ErrIndexSumIncorrect {
 			t.Error(wrongError)
 		}
 	})
