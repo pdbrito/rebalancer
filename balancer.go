@@ -64,6 +64,10 @@ func ClearGlobalPricelist() {
 	globalPricelist = Pricelist{}
 }
 
+// ErrAssetMissingFromPricelist indicates an entry in the holdings does not have
+// a matching entry in the global pricelist.
+var ErrAssetMissingFromPricelist = errors.New("holding asset missing from pricelist")
+
 // Holdings contains a map of Assets and their current quantity.
 type Holdings map[Asset]decimal.Decimal
 
@@ -76,13 +80,15 @@ func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
 		return nil, ErrEmptyHoldings
 	}
 	for asset, holding := range holdings {
-		if holding.LessThan(decimal.Zero) || holding.Equal(decimal.Zero) {
-			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding}
-		}
 		if string(asset) != strings.ToUpper(string(asset)) {
 			return nil, ErrInvalidAsset
 		}
-		//if asset it not in pricelist, error
+		if _, ok := globalPricelist[asset]; !ok {
+			return nil, ErrAssetMissingFromPricelist
+		}
+		if holding.LessThan(decimal.Zero) || holding.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding}
+		}
 	}
 	return holdings, nil
 }
