@@ -139,11 +139,37 @@ func TestNewHoldings(t *testing.T) {
 			t.Errorf("got %v want %v", err, ErrInvalidAsset)
 		}
 	})
-	t.Run("holdings cannot be created from asset values of zero or less", func(t *testing.T) {
+	t.Run("holdings cannot be created with assets missing from the global pricelist", func(t *testing.T) {
+		err := SetPricelist(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		_, err = NewHoldings(map[Asset]decimal.Decimal{
+			"BTC": decimal.NewFromFloat(5),
+		})
+
+		if err != ErrAssetMissingFromPricelist {
+			t.Errorf("got %v, want %v", err, ErrAssetMissingFromPricelist)
+		}
+
+	})
+	t.Run("holdings cannot be created with asset values of zero or less", func(t *testing.T) {
+		err := SetPricelist(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(200),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
 		asset := Asset("ETH")
 		amount := decimal.NewFromFloat(-5)
 
-		_, err := NewHoldings(map[Asset]decimal.Decimal{
+		_, err = NewHoldings(map[Asset]decimal.Decimal{
 			asset: amount,
 		})
 
