@@ -159,27 +159,15 @@ type Trade struct {
 // Balance will return a map[Asset]Trade which will balance the passed in
 // holdings to match the passed in target index.
 func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade, error) {
-	indexTotal := decimal.Zero
-	for asset, percentage := range targetIndex {
-		indexTotal = indexTotal.Add(percentage)
-		if _, ok := globalPricelist[asset]; !ok {
-			return nil, fmt.Errorf(
-				"targetIndex contains asset missing from the pricelist: %s",
-				asset,
-			)
-		}
-	}
-	if !indexTotal.Equal(decimal.NewFromFloat(1)) {
-		return nil, fmt.Errorf(
-			"targetIndex should sum to 1, got %v from %v",
-			indexTotal,
-			targetIndex,
-		)
+	targetIndex, err := NewIndex(targetIndex)
+
+	if err != nil {
+		return nil, err
 	}
 
 	trades := map[Asset]Trade{}
-
 	amountRequired := decimal.Zero
+
 	for asset, percentage := range targetIndex {
 
 		amountRequired = a.value.Mul(percentage).Div(globalPricelist[asset])
