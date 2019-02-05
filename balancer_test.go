@@ -123,69 +123,51 @@ func TestClearGlobalPricelist(t *testing.T) {
 }
 
 func TestNewHoldings(t *testing.T) {
-	got, err := NewHoldings(map[Asset]decimal.Decimal{
-		"ETH": decimal.NewFromFloat(5),
+	t.Run("holdings cannot be created with an empty map", func(t *testing.T) {
+		_, err := NewHoldings(map[Asset]decimal.Decimal{})
+
+		if err != ErrEmptyHoldings {
+			t.Errorf("got %v want %v", err, ErrEmptyHoldings)
+		}
 	})
-
-	if err != nil {
-		t.Error(unexpectedError)
-	}
-
-	want := Holdings{"ETH": decimal.NewFromFloat(5)}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v want %v", got, want)
-	}
-}
-
-func TestNewHoldings_ErrorsOnNonPositiveHoldingAmount(t *testing.T) {
-	asset := Asset("ETH")
-	amount := decimal.NewFromFloat(-5)
-
-	_, err := NewHoldings(map[Asset]decimal.Decimal{
-		asset: amount,
-	})
-
-	want := ErrInvalidAssetAmount{Asset: asset, Amount: amount}
-
-	if err != want {
-		t.Errorf("got %v, want %v", err, want)
-	}
-}
-
-func TestNewHoldings_ErrorsOnInvalidInput(t *testing.T) {
-	testCases := []struct {
-		name     string
-		holdings map[Asset]decimal.Decimal
-		err      error
-	}{
-		{
-			name:     "holdings must not be empty",
-			holdings: map[Asset]decimal.Decimal{},
-			err:      ErrEmptyHoldings,
-		},
-		{
-			name: "holding assets should be uppercase and unique",
-			holdings: map[Asset]decimal.Decimal{
-				"eth": decimal.NewFromFloat(5),
-			},
-			err: ErrInvalidAsset,
-		},
-	}
-
-	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewHoldings(tt.holdings)
-
-			if err == nil {
-				t.Error(missingError)
-			}
-
-			if err != tt.err {
-				t.Errorf("got %v want %v", err, tt.err)
-			}
+	t.Run("holdings cannot be created with invalid asset keys", func(t *testing.T) {
+		_, err := NewHoldings(map[Asset]decimal.Decimal{
+			"eth": decimal.NewFromFloat(5),
 		})
-	}
+
+		if err != ErrInvalidAsset {
+			t.Errorf("got %v want %v", err, ErrInvalidAsset)
+		}
+	})
+	t.Run("holdings cannot be created from asset values of zero or less", func(t *testing.T) {
+		asset := Asset("ETH")
+		amount := decimal.NewFromFloat(-5)
+
+		_, err := NewHoldings(map[Asset]decimal.Decimal{
+			asset: amount,
+		})
+
+		want := ErrInvalidAssetAmount{Asset: asset, Amount: amount}
+
+		if err != want {
+			t.Errorf("got %v, want %v", err, want)
+		}
+	})
+	t.Run("a new holdings can be created", func(t *testing.T) {
+		got, err := NewHoldings(map[Asset]decimal.Decimal{
+			"ETH": decimal.NewFromFloat(5),
+		})
+
+		if err != nil {
+			t.Error(unexpectedError)
+		}
+
+		want := Holdings{"ETH": decimal.NewFromFloat(5)}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
 }
 
 func TestNewAccount(t *testing.T) {
@@ -203,7 +185,7 @@ func TestNewAccount(t *testing.T) {
 			t.Error(wrongError)
 		}
 	})
-	t.Run("a new account cannot be created with negative holding values", func(t *testing.T) {
+	t.Run("a new account cannot be created with invalid asset values in its holdings", func(t *testing.T) {
 		_ = SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -239,7 +221,7 @@ func TestNewAccount(t *testing.T) {
 			t.Error(missingError)
 		}
 	})
-	t.Run("a new account cannot be created with invalid asset names in its holdings", func(t *testing.T) {
+	t.Run("a new account cannot be created with invalid asset keys in its holdings", func(t *testing.T) {
 		_ = SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),

@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// An Asset is a string type used to identify your assets.
+// An Asset is a string type used to identify your assets. It must be uppercase.
 type Asset string
 
 // ErrInvalidAsset indicates an Asset is not uppercase: "eth" vs "ETH".
