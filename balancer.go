@@ -160,7 +160,6 @@ type Trade struct {
 // holdings to match the passed in target index.
 func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade, error) {
 	targetIndex, err := NewIndex(targetIndex)
-
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +168,6 @@ func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade
 	amountRequired := decimal.Zero
 
 	for asset, percentage := range targetIndex {
-
 		amountRequired = a.value.Mul(percentage).Div(globalPricelist[asset])
 
 		if holding, ok := a.holdings[asset]; ok {
