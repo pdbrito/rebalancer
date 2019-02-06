@@ -4,6 +4,7 @@ import (
 	"fmt"
 	. "github.com/pdbrito/balancer"
 	"github.com/shopspring/decimal"
+	"log"
 	"reflect"
 	"testing"
 )
@@ -627,24 +628,34 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 }
 
 func ExampleAccount_Balance() {
-	_ = SetPricelist(map[Asset]decimal.Decimal{
+	err := SetPricelist(Pricelist{
 		"ETH": decimal.NewFromFloat(200),
 		"BTC": decimal.NewFromFloat(5000),
 	})
 
-	holdings := map[Asset]decimal.Decimal{
-		"ETH": decimal.NewFromFloat(20),
-		"BTC": decimal.NewFromFloat(0.5),
+	if err != nil {
+		log.Fatalf("unexpected error whilst setting pricelist: %v", err)
 	}
 
-	targetIndex := map[Asset]decimal.Decimal{
+	account, err := NewAccount(Holdings{
+		"ETH": decimal.NewFromFloat(20),
+		"BTC": decimal.NewFromFloat(0.5),
+	})
+
+	if err != nil {
+		log.Fatalf("unexpected error whilst creating account: %v", err)
+	}
+
+	targetIndex := Index{
 		"ETH": decimal.NewFromFloat(0.5),
 		"BTC": decimal.NewFromFloat(0.5),
 	}
 
-	Account, _ := NewAccount(holdings)
+	requiredTrades, err := account.Balance(targetIndex)
 
-	requiredTrades, _ := Account.Balance(targetIndex)
+	if err != nil {
+		log.Fatalf("unexpected error whilst balancing account: %v", err)
+	}
 
 	for asset, trade := range requiredTrades {
 		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
