@@ -666,6 +666,53 @@ func ExampleAccount_Balance() {
 	// buy 0.15 BTC
 }
 
+func ExampleAccount_Balance_intoNewAssets() {
+	err := SetPricelist(Pricelist{
+		"ETH":  decimal.NewFromFloat(200),
+		"BTC":  decimal.NewFromFloat(2000),
+		"IOTA": decimal.NewFromFloat(0.3),
+		"BAT":  decimal.NewFromFloat(0.12),
+		"XLM":  decimal.NewFromFloat(0.2),
+	})
+
+	if err != nil {
+		log.Fatalf("unexpected error whilst setting pricelist: %v", err)
+	}
+
+	account, err := NewAccount(Holdings{
+		"ETH": decimal.NewFromFloat(42),
+	})
+
+	if err != nil {
+		log.Fatalf("unexpected error whilst creating account: %v", err)
+	}
+
+	targetIndex := Index{
+		"ETH":  decimal.NewFromFloat(0.2),
+		"BTC":  decimal.NewFromFloat(0.2),
+		"IOTA": decimal.NewFromFloat(0.2),
+		"BAT":  decimal.NewFromFloat(0.2),
+		"XLM":  decimal.NewFromFloat(0.2),
+	}
+
+	requiredTrades, err := account.Balance(targetIndex)
+
+	if err != nil {
+		log.Fatalf("unexpected error whilst balancing account: %v", err)
+	}
+
+	for asset, trade := range requiredTrades {
+		fmt.Printf("%s %s %s\n", trade.Action, trade.Amount, asset)
+	}
+
+	// Unordered output:
+	// sell 33.6 ETH
+	// buy 0.84 BTC
+	// buy 5600 IOTA
+	// buy 14000 BAT
+	// buy 8400 XLM
+}
+
 func BenchmarkBalance(b *testing.B) {
 	_ = SetPricelist(map[Asset]decimal.Decimal{
 		"ETH": decimal.NewFromFloat(200),
