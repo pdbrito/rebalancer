@@ -22,10 +22,10 @@ if err != nil {
 }
 ```
 
-If you're holding 20 ETH and 0.5 BTC, you can model your account like this:
+If your assets are 20 ETH and 0.5 BTC, you can model your account like this:
 
 ```go
-account, err := NewAccount(Holdings{
+account, err := NewAccount(Portfolio{
 	"ETH": decimal.NewFromFloat(20),
 	"BTC": decimal.NewFromFloat(0.5),
 })
@@ -57,8 +57,8 @@ targetIndex := Index{
 })
 ```
 
-You can then pass `targetIndex` to your `account.Balance()` and you'll receive the trades necessary to rebalance your 
-holdings as a `map[Asset]Trade`.
+You can then pass `targetIndex` to your `account.Balance()` and you'll receive  
+the trades necessary to rebalance your portfolio as a `map[Asset]Trade`.
 
 ```go
 requiredTrades, err := account.Balance(targetIndex)
@@ -78,7 +78,7 @@ for asset, trade := range requiredTrades {
 
 ### Balancing into new assets
 
-You can also balance your current holdings into other new 
+You can also balance your current portfolio into other new 
 assets, as long as these new assets are included in the global pricelist:
 
 ```go
@@ -94,7 +94,7 @@ if err != nil {
 	log.Fatalf("unexpected error whilst setting pricelist: %v", err)
 }
 
-account, err := NewAccount(Holdings{
+account, err := NewAccount(Portfolio{
 	"ETH": decimal.NewFromFloat(42),
 })
 

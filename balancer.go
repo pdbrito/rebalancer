@@ -68,51 +68,51 @@ func ClearGlobalPricelist() {
 // the global pricelist.
 var ErrAssetMissingFromPricelist = errors.New("asset missing from global pricelist")
 
-// Holdings contains a map of Assets and their current quantity.
-type Holdings map[Asset]decimal.Decimal
+// Portfolio contains a map of Assets and their current amount.
+type Portfolio map[Asset]decimal.Decimal
 
-// ErrEmptyHoldings indicates an empty holdings was passed to NewHoldings.
-var ErrEmptyHoldings = errors.New("holdings must not be empty")
+// ErrEmptyPortfolio indicates an empty portfolio was passed to NewPortfolio.
+var ErrEmptyPortfolio = errors.New("portfolio must not be empty")
 
-// NewHoldings validates and returns a new Holdings type.
-func NewHoldings(holdings map[Asset]decimal.Decimal) (Holdings, error) {
-	if len(holdings) == 0 {
-		return nil, ErrEmptyHoldings
+// NewPortfolio validates and returns a new Portfolio type.
+func NewPortfolio(portfolio map[Asset]decimal.Decimal) (Portfolio, error) {
+	if len(portfolio) == 0 {
+		return nil, ErrEmptyPortfolio
 	}
-	for asset, holding := range holdings {
+	for asset, amount := range portfolio {
 		if string(asset) != strings.ToUpper(string(asset)) {
 			return nil, ErrInvalidAsset
 		}
 		if _, ok := globalPricelist[asset]; !ok {
 			return nil, ErrAssetMissingFromPricelist
 		}
-		if holding.LessThan(decimal.Zero) || holding.Equal(decimal.Zero) {
-			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: holding}
+		if amount.LessThan(decimal.Zero) || amount.Equal(decimal.Zero) {
+			return nil, ErrInvalidAssetAmount{Asset: asset, Amount: amount}
 		}
 	}
-	return holdings, nil
+	return portfolio, nil
 }
 
-// An Account has holdings, a pricelist and a calculated total value.
+// An Account has portfolio, a pricelist and a calculated total value.
 type Account struct {
-	holdings Holdings
-	value    decimal.Decimal
+	portfolio Portfolio
+	value     decimal.Decimal
 }
 
-// NewAccount validates holdings and then returns a new Account struct.
-func NewAccount(holdings map[Asset]decimal.Decimal) (Account, error) {
+// NewAccount validates portfolio and then returns a new Account struct.
+func NewAccount(portfolio map[Asset]decimal.Decimal) (Account, error) {
 	if len(globalPricelist) == 0 {
 		return Account{}, ErrEmptyPricelist
 	}
-	holdings, err := NewHoldings(holdings)
+	portfolio, err := NewPortfolio(portfolio)
 	if err != nil {
 		return Account{}, err
 	}
 	totalValue := decimal.Zero
-	for asset, holding := range holdings {
-		totalValue = totalValue.Add(globalPricelist[asset].Mul(holding))
+	for asset, amount := range portfolio {
+		totalValue = totalValue.Add(globalPricelist[asset].Mul(amount))
 	}
-	return Account{holdings: holdings, value: totalValue}, nil
+	return Account{portfolio: portfolio, value: totalValue}, nil
 }
 
 // Index contains a map of Assets and their values. Indexes values must
@@ -156,8 +156,8 @@ type Trade struct {
 	Amount decimal.Decimal
 }
 
-// Balance will return a map[Asset]Trade which will balance the passed in
-// holdings to match the passed in target index.
+// Balance will return a map[Asset]Trade which will balance the account's
+// portfolio to match the passed in target index.
 func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade, error) {
 	targetIndex, err := NewIndex(targetIndex)
 	if err != nil {
@@ -170,8 +170,8 @@ func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade
 	for asset, percentage := range targetIndex {
 		amountRequired = a.value.Mul(percentage).Div(globalPricelist[asset])
 
-		if holding, ok := a.holdings[asset]; ok {
-			amountRequired = amountRequired.Sub(holding)
+		if portfolioAmount, ok := a.portfolio[asset]; ok {
+			amountRequired = amountRequired.Sub(portfolioAmount)
 		}
 
 		if amountRequired.IsNegative() {
