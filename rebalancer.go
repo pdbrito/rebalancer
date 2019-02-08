@@ -1,8 +1,8 @@
-// Package balancer provides functionality to balance investment assets to a
+// Package rebalancer provides functionality to rebalance investment assets to a
 // target index. This is accomplished by calculating the current percentage
 // allocation of assets and then the trades necessary to match the specified
 // target index.
-package balancer
+package rebalancer
 
 import (
 	"errors"
@@ -156,9 +156,9 @@ type Trade struct {
 	Amount decimal.Decimal
 }
 
-// Balance will return a map[Asset]Trade which will balance the account's
-// portfolio to match the passed in target index.
-func (a Account) Balance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade, error) {
+// Rebalance will return a map[Asset]Trade which will balance the account's
+// portfolio to match the supplied target index.
+func (a Account) Rebalance(targetIndex map[Asset]decimal.Decimal) (map[Asset]Trade, error) {
 	targetIndex, err := NewIndex(targetIndex)
 	if err != nil {
 		return nil, err

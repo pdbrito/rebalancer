@@ -1,8 +1,8 @@
-package balancer_test
+package rebalancer_test
 
 import (
 	"fmt"
-	. "github.com/pdbrito/balancer"
+	. "github.com/pdbrito/rebalancer"
 	"github.com/shopspring/decimal"
 	"log"
 	"reflect"
@@ -373,8 +373,8 @@ func TestNewIndex(t *testing.T) {
 	})
 }
 
-func TestAccount_Balance(t *testing.T) {
-	t.Run("balance cannot receive an empty index", func(t *testing.T) {
+func TestAccount_Rebalance(t *testing.T) {
+	t.Run("rebalance cannot receive an empty index", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -393,13 +393,13 @@ func TestAccount_Balance(t *testing.T) {
 			t.Error(unexpectedError)
 		}
 
-		_, err = account.Balance(Index{})
+		_, err = account.Rebalance(Index{})
 
 		if err != ErrEmptyIndex {
 			t.Errorf("got %v, want %v", err, ErrEmptyIndex)
 		}
 	})
-	t.Run("balance cannot receive an index with invalid asset keys", func(t *testing.T) {
+	t.Run("rebalance cannot receive an index with invalid asset keys", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -418,7 +418,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Error(unexpectedError)
 		}
 
-		_, err = account.Balance(Index{
+		_, err = account.Rebalance(Index{
 			"btc": decimal.NewFromFloat(0.5),
 		})
 
@@ -426,7 +426,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Errorf("got %v, want %v", err, ErrInvalidAsset)
 		}
 	})
-	t.Run("balance cannot receive an index with assets missing from the global pricelist", func(t *testing.T) {
+	t.Run("rebalance cannot receive an index with assets missing from the global pricelist", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 		})
@@ -443,7 +443,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Error(unexpectedError)
 		}
 
-		_, err = account.Balance(Index{
+		_, err = account.Rebalance(Index{
 			"BTC": decimal.NewFromFloat(0.5),
 		})
 
@@ -451,7 +451,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Errorf("got %v, want %v", err, ErrAssetMissingFromPricelist)
 		}
 	})
-	t.Run("balance cannot receive an index with values of zero or less", func(t *testing.T) {
+	t.Run("rebalance cannot receive an index with values of zero or less", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -473,7 +473,7 @@ func TestAccount_Balance(t *testing.T) {
 		invalidAsset := Asset("ETH")
 		invalidAmount := decimal.NewFromFloat(-0.3)
 
-		_, err = account.Balance(Index{
+		_, err = account.Rebalance(Index{
 			invalidAsset: invalidAmount,
 			"BTC":        decimal.NewFromFloat(0.7),
 		})
@@ -484,7 +484,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Errorf("got %v, want %v", err, want)
 		}
 	})
-	t.Run("balance cannot receive an index whose values don't sum to 1", func(t *testing.T) {
+	t.Run("rebalance cannot receive an index whose values don't sum to 1", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -503,7 +503,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Error(unexpectedError)
 		}
 
-		_, err = account.Balance(Index{
+		_, err = account.Rebalance(Index{
 			"BTC": decimal.NewFromFloat(0.7),
 			"ETH": decimal.NewFromFloat(0.7),
 		})
@@ -512,7 +512,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Errorf("got %v, want %v", err, ErrIndexSumIncorrect)
 		}
 	})
-	t.Run("balance can balance an account", func(t *testing.T) {
+	t.Run("rebalance can rebalance an account", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH": decimal.NewFromFloat(200),
 			"BTC": decimal.NewFromFloat(5000),
@@ -531,7 +531,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Error(unexpectedError)
 		}
 
-		got, err := account.Balance(Index{
+		got, err := account.Rebalance(Index{
 			"ETH": decimal.NewFromFloat(0.3),
 			"BTC": decimal.NewFromFloat(0.7),
 		})
@@ -547,7 +547,7 @@ func TestAccount_Balance(t *testing.T) {
 
 		assertSameTrades(t, got, want)
 	})
-	t.Run("balance can balance existing portfolio into new portfolio", func(t *testing.T) {
+	t.Run("rebalance can rebalance existing assets into new assets", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{
 			"ETH":  decimal.NewFromFloat(200),
 			"BTC":  decimal.NewFromFloat(2000),
@@ -578,7 +578,7 @@ func TestAccount_Balance(t *testing.T) {
 			t.Error(unexpectedError)
 		}
 
-		got, err := account.Balance(targetIndex)
+		got, err := account.Rebalance(targetIndex)
 
 		if err != nil {
 			t.Error(unexpectedError)
@@ -627,7 +627,7 @@ func assertSameTrades(t *testing.T, got map[Asset]Trade, want map[Asset]Trade) {
 	}
 }
 
-func ExampleAccount_Balance() {
+func ExampleAccount_Rebalance() {
 	err := SetPricelist(Pricelist{
 		"ETH": decimal.NewFromFloat(200),
 		"BTC": decimal.NewFromFloat(5000),
@@ -651,7 +651,7 @@ func ExampleAccount_Balance() {
 		"BTC": decimal.NewFromFloat(0.5),
 	}
 
-	requiredTrades, err := account.Balance(targetIndex)
+	requiredTrades, err := account.Rebalance(targetIndex)
 
 	if err != nil {
 		log.Fatalf("unexpected error whilst balancing account: %v", err)
@@ -666,7 +666,7 @@ func ExampleAccount_Balance() {
 	// buy 0.15 BTC
 }
 
-func ExampleAccount_Balance_intoNewAssets() {
+func ExampleAccount_Rebalance_intoNewAssets() {
 	err := SetPricelist(Pricelist{
 		"ETH":  decimal.NewFromFloat(200),
 		"BTC":  decimal.NewFromFloat(2000),
@@ -695,7 +695,7 @@ func ExampleAccount_Balance_intoNewAssets() {
 		"XLM":  decimal.NewFromFloat(0.2),
 	}
 
-	requiredTrades, err := account.Balance(targetIndex)
+	requiredTrades, err := account.Rebalance(targetIndex)
 
 	if err != nil {
 		log.Fatalf("unexpected error whilst balancing account: %v", err)
@@ -713,7 +713,7 @@ func ExampleAccount_Balance_intoNewAssets() {
 	// buy 8400 XLM
 }
 
-func BenchmarkBalance(b *testing.B) {
+func BenchmarkRebalance(b *testing.B) {
 	_ = SetPricelist(map[Asset]decimal.Decimal{
 		"ETH": decimal.NewFromFloat(200),
 		"BTC": decimal.NewFromFloat(5000),
@@ -731,6 +731,6 @@ func BenchmarkBalance(b *testing.B) {
 
 		Account, _ := NewAccount(portfolio)
 
-		_, _ = Account.Balance(targetIndex)
+		_, _ = Account.Rebalance(targetIndex)
 	}
 }
