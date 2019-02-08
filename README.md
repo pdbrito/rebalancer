@@ -1,7 +1,7 @@
 # rebalancer
 [![Build Status](https://travis-ci.com/pdbrito/rebalancer.png?branch=master)](https://travis-ci.com/pdbrito/rebalancer) [![GoDoc](https://godoc.org/github.com/pdbrito/rebalancer?status.svg)](https://godoc.org/github.com/pdbrito/rebalancer) [![Go Report Card](https://goreportcard.com/badge/github.com/pdbrito/rebalancer)](https://goreportcard.com/report/github.com/pdbrito/rebalancer) [![Codecov](https://codecov.io/gh/pdbrito/rebalancer/branch/master/graphs/badge.svg)](https://codecov.io/gh/pdbrito/rebalancer/branch/master/)
 
-Rebalancer provides tools to help you [rebalancing your assets](https://en.wikipedia.org/wiki/Rebalancing_investments). 
+Rebalancer provides tools to help you with [rebalancing your assets](https://en.wikipedia.org/wiki/Rebalancing_investments). 
 
 ## Examples
 
