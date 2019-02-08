@@ -1,9 +1,9 @@
-package balancer_test
+package rebalancer_test
 
 import (
 	"fmt"
-	. "github.com/pdbrito/balancer"
 	"github.com/pdbrito/randomSum"
+	. "github.com/pdbrito/rebalancer"
 	"github.com/shopspring/decimal"
 	"math/rand"
 	"reflect"
@@ -28,11 +28,11 @@ func (f fakeAccount) Generate(rand *rand.Rand, size int) reflect.Value {
 	})
 }
 
-func TestBalancer_ResultingIndexEqualToTargetIndex(t *testing.T) {
+func TestRebalance_ResultingIndexEqualToTargetIndex(t *testing.T) {
 	assertion := func(f fakeAccount) bool {
 		_ = SetPricelist(f.Pricelist)
-		Account, _ := NewAccount(f.Portfolio)
-		trades, err := Account.Balance(f.TargetIndex)
+		account, _ := NewAccount(f.Portfolio)
+		trades, err := account.Rebalance(f.TargetIndex)
 
 		if err != nil {
 			return false
@@ -49,8 +49,8 @@ func TestBalancer_ResultingIndexEqualToTargetIndex(t *testing.T) {
 		if e, ok := err.(*quick.CheckError); ok {
 			for _, value := range e.In {
 				f := value.(fakeAccount)
-				Account, _ := NewAccount(f.Portfolio)
-				trades, _ := Account.Balance(f.TargetIndex)
+				account, _ := NewAccount(f.Portfolio)
+				trades, _ := account.Rebalance(f.TargetIndex)
 				fmt.Printf("Portfolio: %v\n", f.Portfolio)
 				fmt.Printf("Target index: %v\n", f.TargetIndex)
 				fmt.Printf("Trades: %v\n", trades)

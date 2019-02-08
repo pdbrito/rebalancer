@@ -1,11 +1,11 @@
-# balancer
-[![Build Status](https://travis-ci.com/pdbrito/balancer.png?branch=master)](https://travis-ci.com/pdbrito/balancer) [![GoDoc](https://godoc.org/github.com/pdbrito/balancer?status.svg)](https://godoc.org/github.com/pdbrito/balancer) [![Go Report Card](https://goreportcard.com/badge/github.com/pdbrito/balancer)](https://goreportcard.com/report/github.com/pdbrito/balancer) [![Codecov](https://codecov.io/gh/pdbrito/balancer/branch/master/graphs/badge.svg)](https://codecov.io/gh/pdbrito/balancer/branch/master/)
+# rebalancer
+[![Build Status](https://travis-ci.com/pdbrito/rebalancer.png?branch=master)](https://travis-ci.com/pdbrito/rebalancer) [![GoDoc](https://godoc.org/github.com/pdbrito/rebalancer?status.svg)](https://godoc.org/github.com/pdbrito/rebalancer) [![Go Report Card](https://goreportcard.com/badge/github.com/pdbrito/rebalancer)](https://goreportcard.com/report/github.com/pdbrito/rebalancer) [![Codecov](https://codecov.io/gh/pdbrito/rebalancer/branch/master/graphs/badge.svg)](https://codecov.io/gh/pdbrito/rebalancer/branch/master/)
 
-Balancer provides guidance with the task of [rebalancing assets](https://en.wikipedia.org/wiki/Rebalancing_investments). 
+Rebalancer provides tools to help you [rebalancing your assets](https://en.wikipedia.org/wiki/Rebalancing_investments). 
 
 ## Examples
 
-### Balance
+### Rebalancing
 
 Let's assume the current price of 1 BTC is $5000 and the current price of 1 ETH is $200.
 
@@ -57,14 +57,14 @@ targetIndex := Index{
 })
 ```
 
-You can then pass `targetIndex` to your `account.Balance()` and you'll receive  
+You can then pass `targetIndex` to your `account.Rebalance()` and you'll receive  
 the trades necessary to rebalance your portfolio as a `map[Asset]Trade`.
 
 ```go
-requiredTrades, err := account.Balance(targetIndex)
+requiredTrades, err := account.Rebalance(targetIndex)
 
 if err != nil {
-	log.Fatalf("unexpected error whilst balancing account: %v", err)
+	log.Fatalf("unexpected error whilst rebalancing account: %v", err)
 }
 
 for asset, trade := range requiredTrades {
@@ -76,9 +76,9 @@ for asset, trade := range requiredTrades {
 // buy 0.15 BTC
 ```
 
-### Balancing into new assets
+### Rebalancing into new assets
 
-You can also balance your current portfolio into other new 
+You can also rebalance your current portfolio into other new 
 assets, as long as these new assets are included in the global pricelist:
 
 ```go
@@ -110,10 +110,10 @@ targetIndex := Index{
 	"XLM":  decimal.NewFromFloat(0.2),
 }
 
-requiredTrades, err := account.Balance(targetIndex)
+requiredTrades, err := account.Rebalance(targetIndex)
 
 if err != nil {
-	log.Fatalf("unexpected error whilst balancing account: %v", err)
+	log.Fatalf("unexpected error whilst rebalancing account: %v", err)
 }
 
 for asset, trade := range requiredTrades {
