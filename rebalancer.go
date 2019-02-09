@@ -25,7 +25,7 @@ type ErrInvalidAssetAmount struct {
 
 // Error formats the error message for ErrInvalidAssetAmount.
 func (e ErrInvalidAssetAmount) Error() string {
-	return fmt.Sprintf("%s needs positive amount, not %s", e.Asset, e.Amount)
+	return fmt.Sprintf("%s must be positive, not %s", e.Asset, e.Amount)
 }
 
 // globalPricelist contains the current pricelist used for all calculations.

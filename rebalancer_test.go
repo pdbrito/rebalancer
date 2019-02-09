@@ -9,9 +9,7 @@ import (
 	"testing"
 )
 
-const unexpectedError string = "got an error but didn't want one"
 const missingError string = "wanted an error but didn't get one"
-const wrongError string = "got an error but expected a different one"
 
 func TestErrInvalidAssetAmount_Error(t *testing.T) {
 	asset := Asset("ETH")
@@ -19,7 +17,7 @@ func TestErrInvalidAssetAmount_Error(t *testing.T) {
 
 	err := ErrInvalidAssetAmount{Asset: asset, Amount: amount}
 
-	want := "ETH needs positive amount, not -5"
+	want := "ETH must be positive, not -5"
 	got := err.Error()
 
 	if got != want {
@@ -35,18 +33,14 @@ func TestSetPricelist(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 	})
 	t.Run("an empty pricelist cannot be set", func(t *testing.T) {
 		err := SetPricelist(map[Asset]decimal.Decimal{})
 
-		if err == nil {
-			t.Error(missingError)
-		}
-
 		if err != ErrEmptyPricelist {
-			t.Error(wrongError)
+			t.Errorf("got: %s, want %s", err, ErrEmptyPricelist)
 		}
 	})
 	t.Run("pricelist asset keys must be uppercase", func(t *testing.T) {
@@ -55,12 +49,8 @@ func TestSetPricelist(t *testing.T) {
 			"btc": decimal.NewFromFloat(5000),
 		})
 
-		if err == nil {
-			t.Error(missingError)
-		}
-
 		if err != ErrInvalidAsset {
-			t.Error(wrongError)
+			t.Errorf("got %v, want %s", err, ErrInvalidAsset)
 		}
 	})
 	t.Run("pricelist entries must have a value above 0", func(t *testing.T) {
@@ -75,7 +65,7 @@ func TestSetPricelist(t *testing.T) {
 		want := ErrInvalidAssetAmount{Asset: invalidAsset, Amount: invalidAmount}
 
 		if err != want {
-			t.Errorf("got %v, want %v", err, want)
+			t.Errorf("got %v, want %s", err, want)
 		}
 	})
 }
@@ -90,14 +80,14 @@ func TestGlobalPricelist(t *testing.T) {
 		err := SetPricelist(pricelist)
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		got := GlobalPricelist()
 		want := Pricelist(pricelist)
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, want %v", got, want)
+			t.Errorf("got %v, want %s", got, want)
 		}
 	})
 }
@@ -109,7 +99,7 @@ func TestClearGlobalPricelist(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		ClearGlobalPricelist()
@@ -118,7 +108,7 @@ func TestClearGlobalPricelist(t *testing.T) {
 		want := Pricelist{}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, want %v", got, want)
+			t.Errorf("got %v, want %s", got, want)
 		}
 	})
 }
@@ -146,7 +136,7 @@ func TestNewPortfolio(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		_, err = NewPortfolio(map[Asset]decimal.Decimal{
@@ -154,7 +144,7 @@ func TestNewPortfolio(t *testing.T) {
 		})
 
 		if err != ErrAssetMissingFromPricelist {
-			t.Errorf("got %v, want %v", err, ErrAssetMissingFromPricelist)
+			t.Errorf("got %v, want %s", err, ErrAssetMissingFromPricelist)
 		}
 	})
 	t.Run("portfolio cannot contain values of zero or less", func(t *testing.T) {
@@ -163,7 +153,7 @@ func TestNewPortfolio(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		asset := Asset("ETH")
@@ -176,7 +166,7 @@ func TestNewPortfolio(t *testing.T) {
 		want := ErrInvalidAssetAmount{Asset: asset, Amount: amount}
 
 		if err != want {
-			t.Errorf("got %v, want %v", err, want)
+			t.Errorf("got %v, want %s", err, want)
 		}
 	})
 	t.Run("a new portfolio can be created", func(t *testing.T) {
@@ -185,7 +175,7 @@ func TestNewPortfolio(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		want := Portfolio{"ETH": decimal.NewFromFloat(5)}
@@ -208,7 +198,7 @@ func TestNewAccount(t *testing.T) {
 		_, err := NewAccount(portfolio)
 
 		if err != ErrEmptyPricelist {
-			t.Error(wrongError)
+			t.Errorf("got %v, want %s", err, ErrEmptyPricelist)
 		}
 	})
 	t.Run("account cannot contain invalid asset keys in its portfolio", func(t *testing.T) {
@@ -230,7 +220,7 @@ func TestNewAccount(t *testing.T) {
 		want := ErrInvalidAssetAmount{Asset: invalidAsset, Amount: invalidAmount}
 
 		if err != want {
-			t.Error(wrongError)
+			t.Errorf("got %v, want %s", err, want)
 		}
 	})
 	t.Run("account cannot contain empty portfolio", func(t *testing.T) {
@@ -278,7 +268,7 @@ func TestNewAccount(t *testing.T) {
 		_, err := NewAccount(portfolio)
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 	})
 }
@@ -288,7 +278,7 @@ func TestNewIndex(t *testing.T) {
 		_, err := NewIndex(map[Asset]decimal.Decimal{})
 
 		if err != ErrEmptyIndex {
-			t.Error(wrongError)
+			t.Errorf("got %v, want %s", err, ErrEmptyIndex)
 		}
 	})
 	t.Run("index cannot contain invalid asset keys", func(t *testing.T) {
@@ -298,7 +288,7 @@ func TestNewIndex(t *testing.T) {
 		})
 
 		if err != ErrInvalidAsset {
-			t.Error(wrongError)
+			t.Errorf("got %v, want %s", err, ErrInvalidAsset)
 		}
 	})
 	t.Run("index cannot contain assets missing from the global pricelist", func(t *testing.T) {
@@ -307,7 +297,7 @@ func TestNewIndex(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		_, err = NewIndex(map[Asset]decimal.Decimal{
@@ -315,7 +305,7 @@ func TestNewIndex(t *testing.T) {
 		})
 
 		if err != ErrAssetMissingFromPricelist {
-			t.Errorf("got %v, want %v", err, ErrAssetMissingFromPricelist)
+			t.Errorf("got %v, want %s", err, ErrAssetMissingFromPricelist)
 		}
 	})
 	t.Run("index cannot contain values of zero or less", func(t *testing.T) {
@@ -325,7 +315,7 @@ func TestNewIndex(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		invalidAsset := Asset("BTC")
@@ -339,7 +329,7 @@ func TestNewIndex(t *testing.T) {
 		want := ErrInvalidAssetAmount{Asset: invalidAsset, Amount: invalidAmount}
 
 		if err != want {
-			t.Errorf("got %v, want %v", err, want)
+			t.Errorf("got %v, want %s", err, want)
 		}
 	})
 	t.Run("index values must sum to 1", func(t *testing.T) {
@@ -349,7 +339,7 @@ func TestNewIndex(t *testing.T) {
 		})
 
 		if err != ErrIndexSumIncorrect {
-			t.Error(wrongError)
+			t.Errorf("got %v, want %s", err, ErrIndexSumIncorrect)
 		}
 	})
 	t.Run("a new index can be created", func(t *testing.T) {
@@ -359,7 +349,7 @@ func TestNewIndex(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		want := Index{
@@ -381,7 +371,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		account, err := NewAccount(Portfolio{
@@ -390,13 +380,13 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		_, err = account.Rebalance(Index{})
 
 		if err != ErrEmptyIndex {
-			t.Errorf("got %v, want %v", err, ErrEmptyIndex)
+			t.Errorf("got %v, want %s", err, ErrEmptyIndex)
 		}
 	})
 	t.Run("rebalance cannot receive an index with invalid asset keys", func(t *testing.T) {
@@ -406,7 +396,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		account, err := NewAccount(Portfolio{
@@ -415,7 +405,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		_, err = account.Rebalance(Index{
@@ -423,7 +413,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != ErrInvalidAsset {
-			t.Errorf("got %v, want %v", err, ErrInvalidAsset)
+			t.Errorf("got %v, want %s", err, ErrInvalidAsset)
 		}
 	})
 	t.Run("rebalance cannot receive an index with assets missing from the global pricelist", func(t *testing.T) {
@@ -432,7 +422,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		account, err := NewAccount(Portfolio{
@@ -440,7 +430,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		_, err = account.Rebalance(Index{
@@ -448,7 +438,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != ErrAssetMissingFromPricelist {
-			t.Errorf("got %v, want %v", err, ErrAssetMissingFromPricelist)
+			t.Errorf("got %v, want %s", err, ErrAssetMissingFromPricelist)
 		}
 	})
 	t.Run("rebalance cannot receive an index with values of zero or less", func(t *testing.T) {
@@ -458,7 +448,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		account, err := NewAccount(Portfolio{
@@ -467,7 +457,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		invalidAsset := Asset("ETH")
@@ -481,7 +471,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		want := ErrInvalidAssetAmount{Asset: invalidAsset, Amount: invalidAmount}
 
 		if err != want {
-			t.Errorf("got %v, want %v", err, want)
+			t.Errorf("got %v, want %s", err, want)
 		}
 	})
 	t.Run("rebalance cannot receive an index whose values don't sum to 1", func(t *testing.T) {
@@ -491,7 +481,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		account, err := NewAccount(Portfolio{
@@ -500,7 +490,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		_, err = account.Rebalance(Index{
@@ -509,7 +499,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != ErrIndexSumIncorrect {
-			t.Errorf("got %v, want %v", err, ErrIndexSumIncorrect)
+			t.Errorf("got %v, want %s", err, ErrIndexSumIncorrect)
 		}
 	})
 	t.Run("rebalance can rebalance an account", func(t *testing.T) {
@@ -519,7 +509,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		account, err := NewAccount(Portfolio{
@@ -528,7 +518,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		got, err := account.Rebalance(Index{
@@ -537,7 +527,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		want := map[Asset]Trade{
@@ -557,7 +547,7 @@ func TestAccount_Rebalance(t *testing.T) {
 		})
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		portfolio := map[Asset]decimal.Decimal{
@@ -575,13 +565,13 @@ func TestAccount_Rebalance(t *testing.T) {
 		account, err := NewAccount(portfolio)
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		got, err := account.Rebalance(targetIndex)
 
 		if err != nil {
-			t.Error(unexpectedError)
+			t.Errorf("unexpected error: %s", err)
 		}
 
 		want := map[Asset]Trade{
