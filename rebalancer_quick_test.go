@@ -40,7 +40,7 @@ func TestRebalance_ResultingIndexEqualToTargetIndex(t *testing.T) {
 
 		portfolioAfter := execute(trades, f.Portfolio)
 
-		resultingIndex := calculateIndex(portfolioAfter, f.Pricelist)
+		resultingIndex := calculateIndex(portfolioAfter)
 
 		return indexesAreEqual(f.TargetIndex, resultingIndex)
 	}
@@ -61,11 +61,11 @@ func TestRebalance_ResultingIndexEqualToTargetIndex(t *testing.T) {
 	}
 }
 
-func calculateIndex(portfolio map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) map[Asset]decimal.Decimal {
-	index := make(map[Asset]decimal.Decimal)
-	value := value(portfolio, pricelist)
+func calculateIndex(portfolio map[Asset]decimal.Decimal) map[Asset]decimal.Decimal {
+	index := map[Asset]decimal.Decimal{}
+	value := calculateValueOfPortfolio(portfolio)
 	for asset, amount := range portfolio {
-		index[asset] = pricelist[asset].Mul(amount).Div(value)
+		index[asset] = GlobalPricelist()[asset].Mul(amount).Div(value)
 	}
 	return index
 }
@@ -83,7 +83,7 @@ func indexesAreEqual(i1, i2 map[Asset]decimal.Decimal) bool {
 }
 
 func generatePortfolio(n int) map[Asset]decimal.Decimal {
-	portfolio := make(map[Asset]decimal.Decimal)
+	portfolio := map[Asset]decimal.Decimal{}
 	for i := 0; i < n; i++ {
 		assetKey := strconv.Itoa(i)
 		portfolio[Asset(assetKey)] = decimal.NewFromFloat(rand.Float64() * 1000)
@@ -92,7 +92,7 @@ func generatePortfolio(n int) map[Asset]decimal.Decimal {
 }
 
 func generateTargetIndexForPortfolio(portfolio map[Asset]decimal.Decimal) map[Asset]decimal.Decimal {
-	targetIndex := make(map[Asset]decimal.Decimal)
+	targetIndex := map[Asset]decimal.Decimal{}
 
 	numberOfAssets := len(portfolio)
 	indexValues := randomSum.NIntsTotaling(numberOfAssets, 100)
@@ -106,9 +106,9 @@ func generateTargetIndexForPortfolio(portfolio map[Asset]decimal.Decimal) map[As
 	return targetIndex
 }
 
-func value(portfolio map[Asset]decimal.Decimal, pricelist map[Asset]decimal.Decimal) (sum decimal.Decimal) {
+func calculateValueOfPortfolio(portfolio map[Asset]decimal.Decimal) (sum decimal.Decimal) {
 	for asset, amount := range portfolio {
-		sum = sum.Add(amount.Mul(pricelist[asset]))
+		sum = sum.Add(amount.Mul(GlobalPricelist()[asset]))
 	}
 	return sum
 }
