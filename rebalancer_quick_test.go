@@ -74,8 +74,8 @@ func indexesAreEqual(i1, i2 map[Asset]decimal.Decimal) bool {
 	if len(i1) != len(i2) {
 		return false
 	}
-	for asset, amount := range i1 {
-		if amount2, ok := i2[asset]; !ok || !amount.Equal(amount2) {
+	for asset, percentage := range i1 {
+		if percentage2, ok := i2[asset]; !ok || !percentage.Equal(percentage2) {
 			return false
 		}
 	}
