@@ -1,7 +1,7 @@
-// Package rebalancer provides functionality to rebalance investment assets to a
-// target index. This is accomplished by calculating the current percentage
-// allocation of assets and then the trades necessary to match the specified
-// target index.
+// Package rebalancer provides functionality to rebalance a portfolio of
+// investment assets to match a target index. This is accomplished by
+// calculating the current percentage allocation of assets and determining the
+// trades necessary to reallocate funds to match the desired target index.
 package rebalancer
 
 import (
